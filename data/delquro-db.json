@@ -1,1 +1,28 @@
-{"nextId":1,"projects":[],"ideas":[],"changelog":[],"builds":[],"code":[],"dialogues":[],"inbox":[]}
+{
+  "nextId": 1,
+  "projects": [],
+  "ideas": [],
+  "changelog": [],
+  "builds": [],
+  "code": [],
+  "dialogues": [],
+  "inbox": [
+    {
+      "id": "inbox-1787861328905-416",
+      "name": "Arena Sandbox Gateway Protocol",
+      "tagline": "Real-time AI agent integration active on Arena.site preview sandbox",
+      "description": "The Arena Sandbox Gateway Protocol connects the AI assistant directly to The DelQuro Files receiver running inside the live container. It validates bidirectional payload dispatch, sub-second 120-word card parsing, and immediate dashboard staging across the preview domain.",
+      "wordCount": 37,
+      "stack": "TypeScript, Node.js, Arena Sandbox, REST API",
+      "arena_link": "https://sbx-pe2mqbwepcncvhas.arena.site/",
+      "github_link": "https://github.com/PlanExServices/Static_Upload",
+      "emergent_link": "https://emergent.sh/",
+      "base44_link": "https://base44.com/",
+      "differentiator": "Direct in-sandbox webhook routing with zero external network hops and instant live preview synchronization.",
+      "filename": "arena_gateway.ts",
+      "code": "// Arena Sandbox Gateway Protocol Active\nexport const gatewayStatus = \"connected\";\nconsole.log(\"Receiver listening on https://sbx-pe2mqbwepcncvhas.arena.site/api/intake\");",
+      "status": "pending",
+      "createdAt": "2026-08-27T20:08:48.905Z"
+    }
+  ]
+}

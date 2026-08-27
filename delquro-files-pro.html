@@ -1109,8 +1109,7 @@ function getActiveBackendBase() {
   const custom = localStorage.getItem("delquro_backend_url");
   if (custom) return custom.replace(/\/+$/, "");
   if (window.location.hostname.includes("onrender.com")) return window.location.origin;
-  if (window.location.hostname.includes("github.io")) return "https://static-upload.onrender.com";
-  if (window.location.protocol.startsWith("http")) return window.location.origin;
+  // Always use the permanent public Render backend (never temporary sandbox URLs)
   return "https://static-upload.onrender.com";
 }
 
@@ -2326,11 +2325,10 @@ const actions = {
   },
 
     "open-ai-prompt-modal": () => {
-    const intakeUrl = getIntakeEndpoint();
-    const apiKey = localStorage.getItem("delquro_api_key") || "";
-    const authHeaderNote = apiKey ? `\n  -H "X-API-Key: ${apiKey}"` : '';
-    const authJsonNote = apiKey ? `\n  "api_key": "${apiKey}",` : '';
-    const siteUrl = window.location.origin.includes("github.io") ? "https://planexservices.github.io/Static_Upload/" : window.location.origin + "/";
+    const intakeUrl = "https://static-upload.onrender.com/api/intake";
+    const apiKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+    const authHeaderNote = `\n  -H "X-API-Key: ${apiKey}"`;
+    const siteUrl = "https://planexservices.github.io/Static_Upload/";
 
     const promptText = `You are an AI assistant helping me build and track software in "The DelQuro Files".
 Whenever you write code, propose an idea, or finish a feature for me:
@@ -2339,7 +2337,8 @@ Whenever you write code, propose an idea, or finish a feature for me:
    ${intakeUrl}
 
 JSON Payload Format:
-{${apiKey ? `\n  "api_key": "${apiKey}",` : ''}
+{
+  "api_key": "f67d832c80a1fe6bfdce41f3d3ea94bd",
   "name": "<Project Name>",
   "tagline": "<Punchy one-sentence summary>",
   "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
@@ -2353,10 +2352,12 @@ JSON Payload Format:
   "code": "<source code snippet or key implementation>"
 }`;
 
-    const curlCmd = `curl -X POST ${intakeUrl} ${authHeaderNote} \\
+    const curlCmd = `curl -X POST https://static-upload.onrender.com/api/intake \\
   -H "Content-Type: application/json" \\
+  -H "X-API-Key: f67d832c80a1fe6bfdce41f3d3ea94bd" \\
   -d @- << 'EOF'
 {
+  "api_key": "f67d832c80a1fe6bfdce41f3d3ea94bd",
   "name": "HyperAgent Router",
   "tagline": "Autonomous multi-model query router with sub-50ms latency",
   "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",

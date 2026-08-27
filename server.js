@@ -691,6 +691,9 @@ const server = http.createServer(async (req, res) => {
       serverDB.dialogues = clientDB.dialogues && clientDB.dialogues.length ? clientDB.dialogues : serverDB.dialogues;
 
       saveJSON(DB_FILE, serverDB);
+      if (GITHUB_TOKEN) {
+        commitFileToGitHub("data/delquro-db.json", JSON.stringify(serverDB, null, 2), "Auto-sync database update to GitHub");
+      }
       return sendJSON(200, { success: true, db: serverDB });
     }
 

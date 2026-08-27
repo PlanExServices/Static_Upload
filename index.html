@@ -800,7 +800,50 @@ function projectName(id) { const p = db.projects.find(x => x.id === id); return 
 function addRow(kind, obj) { obj.id = uid(); db[kind].unshift(obj); persist(); }
 function updateRow(kind, id, patch) { const r = db[kind].find(x => x.id === id); if (r) { Object.assign(r, patch); persist(); } }
 function deleteRow(kind, id) { db[kind] = db[kind].filter(x => x.id !== id); persist(); }
-function persist() { store.save(db); updateStorageDot(); updateCounts(); }
+
+let cloudPushTimer = null;
+async function pushToCloudStorage() {
+  const apiKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+  const renderSync = "https://static-upload.onrender.com/api/sync";
+
+  // 1. Sync to Render Cloud Server
+  try {
+    await fetch(renderSync, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
+      body: JSON.stringify(db),
+      mode: "cors"
+    });
+  } catch (e) {
+    // Render might be sleeping; silent failover to GitHub
+  }
+
+  // 2. Sync to GitHub Repository (Option A)
+  const ghToken = localStorage.getItem("delquro_github_token");
+  if (ghToken) {
+    try {
+      const ok = await clientCommitToGitHub("data/delquro-db.json", JSON.stringify(db, null, 2), "Auto-sync database update to GitHub");
+      if (ok) {
+        const dot = $("#storage .dot");
+        if (dot) { dot.style.background = "var(--cyan)"; setTimeout(() => updateStorageDot(), 2000); }
+      }
+    } catch (e) {}
+  }
+}
+
+function persist(triggerCloudPush = true) {
+  store.save(db);
+  updateStorageDot();
+  updateCounts();
+
+  if (triggerCloudPush) {
+    clearTimeout(cloudPushTimer);
+    cloudPushTimer = setTimeout(() => {
+      pushToCloudStorage();
+    }, 1200);
+  }
+}
+
 
 /* ============================ state / nav ============================ */
 const state = { view: "dashboard", projectId: null, ideaFilter: "all", mlFilter: "all", clProject: "", bProject: "", cProject: "", dProject: "", intakeDraft: null };
@@ -1526,7 +1569,12 @@ function projectCard(p) {
   return `<div class="card project-card" data-action="open-project" data-id="${p.id}">
     <div class="pc-head">
       <h3 class="pc-name">${esc(p.name)}</h3>
-      <span class="badge st-${esc(p.status)}">${esc(p.status)}</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <select class="mini proj-status-sel" data-action="set-project-status" data-id="${p.id}" title="Change status (auto-pushes to GitHub)">
+          ${["active", "planned", "paused", "shipped", "archived"].map(s => `<option value="${s}" ${p.status === s ? "selected" : ""}>${cap(s)}</option>`).join("")}
+        </select>
+        <span class="badge st-${esc(p.status)}">${esc(p.status)}</span>
+      </div>
     </div>
     ${p.tagline ? `<p class="pc-tagline">${esc(p.tagline)}</p>` : ""}
     
@@ -2806,7 +2854,18 @@ function initEvents() {
   });
   document.addEventListener("change", e => {
     const el = e.target.closest("[data-action]");
-    if (el && el.dataset.action === "set-idea-status") { updateRow("ideas", +el.dataset.id, { status: el.value }); toast("Status → " + el.value); render(); return; }
+    if (el && el.dataset.action === "set-project-status") {
+      updateRow("projects", +el.dataset.id, { status: el.value, updatedAt: nowISO() });
+      toast(`Project status → ${el.value} (Synced to Cloud ☁️)`);
+      render();
+      return;
+    }
+    if (el && el.dataset.action === "set-idea-status") {
+      updateRow("ideas", +el.dataset.id, { status: el.value });
+      toast(`Idea status → ${el.value} (Synced to Cloud ☁️)`);
+      render();
+      return;
+    }
     const filters = { "cl-project": "clProject", "b-project": "bProject", "c-project": "cProject", "d-project": "dProject" };
     if (filters[e.target.id]) { state[filters[e.target.id]] = e.target.value; render(); }
   });
@@ -3198,25 +3257,52 @@ $("#menu-btn").addEventListener("click", openMenuSheet);
 updateCounts();
 
 async function syncWithServerOnBoot() {
-  if (window.location.protocol.startsWith("http")) {
+  try {
+    let cloudData = null;
+
+    // 1. Try Render cloud server
     try {
-      const res = await fetch("/api/db");
-      if (res.ok) {
-        const sdb = await res.json();
-        if (sdb && sdb.projects && sdb.projects.length) {
-          const merged = [...db.projects];
-          sdb.projects.forEach(sp => {
-            const idx = merged.findIndex(p => p.id === sp.id);
-            if (idx === -1) merged.push(sp);
-            else merged[idx] = Object.assign({}, sp, merged[idx]);
-          });
-          db.projects = merged;
-          if (sdb.inbox) db.inbox = sdb.inbox;
-          persist();
-          render();
-        }
-      }
+      const res = await fetch("https://static-upload.onrender.com/api/db", { mode: "cors" });
+      if (res.ok) cloudData = await res.json();
     } catch (e) {}
+
+    // 2. If Render didn't respond or empty, pull directly from GitHub repository!
+    if (!cloudData || (!cloudData.projects && !cloudData.ideas)) {
+      try {
+        const ghRepo = localStorage.getItem("delquro_github_repo") || "PlanExServices/Static_Upload";
+        const ghBranch = localStorage.getItem("delquro_github_branch") || "main";
+        const ghRes = await fetch(`https://raw.githubusercontent.com/${ghRepo}/${ghBranch}/data/delquro-db.json?t=` + Date.now());
+        if (ghRes.ok) cloudData = await ghRes.json();
+      } catch (e) {}
+    }
+
+    if (cloudData && (Array.isArray(cloudData.projects) || Array.isArray(cloudData.ideas) || Array.isArray(cloudData.inbox))) {
+      // Merge projects: restore even if browser was completely cleared!
+      const localProjects = db.projects || [];
+      const mergedProjects = [...localProjects];
+      (cloudData.projects || []).forEach(cp => {
+        const idx = mergedProjects.findIndex(p => p.id === cp.id);
+        if (idx === -1) mergedProjects.push(cp);
+        else mergedProjects[idx] = Object.assign({}, cp, mergedProjects[idx]);
+      });
+      db.projects = mergedProjects;
+
+      if (cloudData.inbox && cloudData.inbox.length) db.inbox = cloudData.inbox;
+      if (cloudData.ideas && cloudData.ideas.length) db.ideas = cloudData.ideas;
+      if (cloudData.changelog && cloudData.changelog.length) db.changelog = cloudData.changelog;
+      if (cloudData.builds && cloudData.builds.length) db.builds = cloudData.builds;
+      if (cloudData.code && cloudData.code.length) db.code = cloudData.code;
+      if (cloudData.dialogues && cloudData.dialogues.length) db.dialogues = cloudData.dialogues;
+      if (cloudData.nextId && cloudData.nextId > db.nextId) db.nextId = cloudData.nextId;
+
+      persist(false); // save to localStorage without recursive push
+      render();
+      if (mergedProjects.length > 0) {
+        toast(`Restored ${mergedProjects.length} project(s) from Cloud Storage ☁️`);
+      }
+    }
+  } catch (err) {
+    console.error("Boot cloud restore error:", err);
   }
 }
 

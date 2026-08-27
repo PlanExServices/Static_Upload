@@ -8,21 +8,21 @@
   "dialogues": [],
   "inbox": [
     {
-      "id": "inbox-1787861328905-416",
-      "name": "Arena Sandbox Gateway Protocol",
-      "tagline": "Real-time AI agent integration active on Arena.site preview sandbox",
-      "description": "The Arena Sandbox Gateway Protocol connects the AI assistant directly to The DelQuro Files receiver running inside the live container. It validates bidirectional payload dispatch, sub-second 120-word card parsing, and immediate dashboard staging across the preview domain.",
-      "wordCount": 37,
-      "stack": "TypeScript, Node.js, Arena Sandbox, REST API",
-      "arena_link": "https://sbx-pe2mqbwepcncvhas.arena.site/",
-      "github_link": "https://github.com/PlanExServices/Static_Upload",
-      "emergent_link": "https://emergent.sh/",
-      "base44_link": "https://base44.com/",
-      "differentiator": "Direct in-sandbox webhook routing with zero external network hops and instant live preview synchronization.",
-      "filename": "arena_gateway.ts",
-      "code": "// Arena Sandbox Gateway Protocol Active\nexport const gatewayStatus = \"connected\";\nconsole.log(\"Receiver listening on https://sbx-pe2mqbwepcncvhas.arena.site/api/intake\");",
+      "id": "inbox-1787861886639-307",
+      "name": "Idea Labs Explorer",
+      "tagline": "A single-file interactive dashboard that turns 242 screenshots into a searchable, cross-linked intelligence hub.",
+      "description": "Offline-capable explorer built from the idea labs image drop. Pipeline: every image OCR'd with Tesseract, compressed to embedded base64 thumbnails, then analyst-verified. Frontend is one self-contained HTML file (no dependencies): tabbed interface with global search across names, URLs, prompts, and transcriptions; sortable/filterable card grid of 314 unique websites with outbound links; 9 copy-to-clipboard script/prompt packs; 136 summary cards where each card shows its screenshot, the items listed in it (hyperlinked), and a written-out transcription. Unified sitewide card design system; covers 242/242 images.",
+      "wordCount": 82,
+      "stack": "Python 3, Pillow, Tesseract OCR, Vanilla JavaScript, Inline CSS, JSON, Single-file HTML",
+      "arena_link": "https://arena.ai/ (Arena.ai Agent Mode session — placeholder)",
+      "github_link": "https://github.com/PlanExServices/DelQuro.com/releases/tag/idea-labs-2026-08-27",
+      "emergent_link": "https://emergent.sh/ (placeholder)",
+      "base44_link": "https://base44.com/ (placeholder)",
+      "differentiator": "Zero-dependency single-file app that works inside network-isolated sandboxes; every image is both OCR-transcribed and human-analyst verified; reverse index links each website to the exact screenshots it appeared in, and each image back to the items it lists — no other view of this archive exists.",
+      "filename": "idea_labs_explorer.html",
+      "code": "// unified card anatomy used sitewide (websites, scripts, summaries)\nfunction cardShell(title, badge, bodyHTML, footerHTML){\n  return `<div class=\"card\">\n    <div class=\"card-h\">${title}${badge||''}</div>\n    <div class=\"card-b\">${bodyHTML}</div>\n    <div class=\"card-f\">${footerHTML}</div>\n  </div>`;\n}\n// reverse index: image -> websites that appear in it\nconst img2sites = {};\nwebsites.forEach(w => w.src.forEach(s => {\n  (s.match(/IMG_\\d+/g)||[]).forEach(m =>\n    (img2sites[m] = img2sites[m] || []).push({label: w.name, url: w.url}));\n}));",
       "status": "pending",
-      "createdAt": "2026-08-27T20:08:48.905Z"
+      "createdAt": "2026-08-27T20:18:06.639Z"
     }
   ]
 }

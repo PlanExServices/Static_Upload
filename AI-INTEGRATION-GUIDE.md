@@ -18,92 +18,75 @@ Your dashboard sites:
 
 ## 🔒 Security: Local Environment Variable Mode
 
-To prevent your secret key from ever being exposed in public chat prompts, your system uses the **Local Environment Variable Mode**:
-- On Render, the server enforces your secret key (`INTAKE_API_KEY`).
-- On your computer or local shell, you store the key once in your environment:
-  ```bash
-  export INTAKE_API_KEY="[YOUR_PRIVATE_API_KEY]"
-  ```
-  *(Add this line to your `~/.bashrc` or `~/.zshrc` so it is always available).*
-- In chat prompts and curl scripts, you and the AI reference **`$INTAKE_API_KEY`**.
-- When the command runs, your local shell evaluates `$INTAKE_API_KEY` automatically. **Your secret key is never leaked in the public chat!**
+To protect your private secret key from ever leaking in public chat prompts, your system uses the **Local Environment Variable Mode**:
+- In chat prompts and documentation, use the placeholder `[YOUR_PRIVATE_API_KEY]` or reference the environment variable `$INTAKE_API_KEY`.
+- In your browser dashboard, save your key once in the **"🔑 Set API Key"** modal (stored strictly in your local device's `localStorage`).
+- On Render, set your private key under **Environment > INTAKE_API_KEY**.
 
 ---
 
-## 🤖 Tell Your AI How to Upload Code (Safe for Public Chats)
+## 🤖 The AI Intake Questionnaire & Prompt Schema
 
-### Option 1: Safe Public Chat Prompt (Claude, ChatGPT, Arena Agent)
-Copy and paste this prompt into any public or shared AI chat:
+Whenever you prompt Claude, ChatGPT, Cursor, Windsurf, or Arena Agent, use this questionnaire prompt. It now requires the **logged-in User ID / account handle** for Arena.ai, GitHub, Emergent, and Base44:
 
 ```markdown
-You are helping me build and organize projects for "The DelQuro Files".
-Whenever you propose an idea, complete a script, or write a feature for me:
-1. Formulate a structured project intake card conforming to the JSON schema below.
-2. Send an HTTP POST request to: https://static-upload.onrender.com/api/intake
-   (Include the authorization header: -H "X-API-Key: $INTAKE_API_KEY")
+You are an AI assistant helping me build and track software in "The DelQuro Files".
+Whenever you write code, propose an idea, or finish a feature for me, ALWAYS PRINT OUT:
 
-JSON Schema:
-{
-  "name": "<Project Name>",
-  "tagline": "<Punchy one-sentence summary>",
-  "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
-  "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
-  "arena_link": "<https://arena.ai/... or placeholder>",
-  "github_link": "<https://github.com/... or placeholder>",
-  "emergent_link": "<https://emergent.sh/... or placeholder>",
-  "base44_link": "<https://base44.com/... or placeholder>",
-  "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
-  "filename": "<main file name, e.g. app.py, index.ts>",
-  "code": "<source code snippet or key implementation>"
-}
-```
+1. A visual Project Card summary for user review:
+   - Name & Tagline
+   - Description (STRICT MAXIMUM 120 WORDS)
+   - Tech Stack
+   - Logged-in User Account: user_id (e.g. @planex)
+   - Platform Links & Logged-in Accounts:
+     * arena.ai (Link + arena_user handle, e.g. @planex)
+     * github.com (Link + github_user account, e.g. PlanExServices)
+     * emergent.sh (Link + emergent_user handle)
+     * base44.com (Link + base44_user handle)
+   - The Edge (What sets this idea apart from others in the same field)
 
----
-
-### Option 2: Terminal / CLI Upload (curl)
-Run this command from any terminal or AI coding agent (Cursor, Windsurf, Aider):
-
-```bash
+2. The ready-to-run curl upload command:
 curl -X POST https://static-upload.onrender.com/api/intake \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: $INTAKE_API_KEY" \
-  -d @- << 'EOF'
-{
-  "name": "HyperAgent Router",
-  "tagline": "Autonomous multi-model query router with sub-50ms latency",
-  "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",
-  "stack": "TypeScript, Fastify, Redis, Arena SDK",
-  "arena_link": "https://arena.ai/c/hyperagent",
-  "github_link": "https://github.com/PlanExServices/Static_Upload",
-  "emergent_link": "https://emergent.sh/app/hyperagent",
-  "base44_link": "https://base44.com/apps/hyperagent",
-  "differentiator": "Unlike heavy frameworks like LangChain, HyperAgent has zero runtime dependencies, a 12KB footprint, and sub-millisecond dispatch overhead.",
-  "filename": "router.ts",
-  "code": "// Source code here"
-}
-EOF
+  -d '{
+    "api_key": "[YOUR_PRIVATE_API_KEY]",
+    "name": "<Project Name>",
+    "tagline": "<Punchy one-sentence summary>",
+    "description": "<Concise overview of what it does — STRICT MAXIMUM 120 WORDS>",
+    "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
+    "user_id": "<Your primary logged-in user handle, e.g. @planex>",
+    "arena_link": "<https://arena.ai/... or placeholder>",
+    "arena_user": "<Logged-in Arena.ai user ID / handle, e.g. @planex>",
+    "github_link": "<https://github.com/... or placeholder>",
+    "github_user": "<Logged-in GitHub account / org, e.g. PlanExServices>",
+    "emergent_link": "<https://emergent.sh/... or placeholder>",
+    "emergent_user": "<Logged-in Emergent.sh user ID / handle>",
+    "base44_link": "<https://base44.com/... or placeholder>",
+    "base44_user": "<Logged-in Base44.com user ID / handle>",
+    "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
+    "filename": "<main file name, e.g. app.py, agent.tsx>",
+    "code": "<source code snippet or key implementation>"
+  }'
+
+3. The exact JSON payload block above so the user can easily copy and paste it into DelQuro Files!
 ```
 
 ---
 
-### Option 3: Cursor / Windsurf / Copilot (`.cursorrules`)
-Add this rule to your project's `.cursorrules` or system prompt:
-```
-When finishing a code milestone or building a new feature:
-1. Formulate a project card definition:
-   - name, tagline
-   - description (STRICTLY <= 120 words)
-   - stack
-   - arena_link, github_link, emergent_link, base44_link
-   - differentiator ("what sets this idea apart")
-2. Send HTTP POST request to https://static-upload.onrender.com/api/intake using header:
-   X-API-Key: $INTAKE_API_KEY
-```
+## 🏷️ How User IDs Appear on Your Cards
 
----
-
-### Option 4: Quick Web Dropzone (No Keys, 100% Offline)
-If you don't want any network calls:
-1. Open **[https://static-upload.onrender.com/](https://static-upload.onrender.com/)** or **[https://planexservices.github.io/Static_Upload/](https://planexservices.github.io/Static_Upload/)**.
-2. Click **AI Intake & Studio** > **"➕ Paste / Drop Code"**.
-3. Paste the code or prompt response — the built-in parser automatically extracts all 8 fields, enforces the 120-word limit, and loads it into the interactive Card Studio!
+1. **Card Gallery**:
+   - Next to the project title, an identity badge displays the creator account:
+     `[🤖 @planex]`
+   - Each platform button displays the associated logged-in handle:
+     - `Arena.ai (@planex) ↗`
+     - `GitHub (PlanExServices) ↗`
+     - `Emergent.sh (@planex) ↗`
+     - `Base44.com (@planex) ↗`
+2. **Project Detail Page**:
+   - A dedicated **"LOGGED-IN USER IDENTITIES & PLATFORM ACCOUNTS"** banner displays individual pills for every connected account:
+     - `User: @planex`
+     - `Arena: @planex`
+     - `GitHub: PlanExServices`
+     - `Emergent: @planex`
+     - `Base44: @planex`

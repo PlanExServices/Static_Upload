@@ -424,6 +424,27 @@ time { cursor: default; }
 .receiver-url code { word-break: break-all; max-width: 100%; display: inline-block; }
 .pc-links .link-btn { white-space: nowrap; }
 
+
+.pc-user-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: var(--mono);
+  color: var(--cyan); background: rgba(56,204,255,0.08); border: 1px solid rgba(56,204,255,0.22);
+  border-radius: 6px; padding: 1px 6px; margin-top: 3px;
+}
+.pd-accounts-banner {
+  margin: 10px 0 14px; padding: 10px 14px; border-radius: 10px;
+  background: var(--bg); border: 1px solid var(--border2); display: flex; flex-direction: column; gap: 6px;
+}
+.pd-acc-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted); font-family: var(--mono); }
+.pd-acc-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.acc-pill {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-family: var(--mono);
+  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border2); background: var(--panel2); color: var(--text);
+}
+.acc-pill.arena { color: var(--cyan); border-color: rgba(56,204,255,0.3); }
+.acc-pill.github { color: var(--violet); border-color: rgba(157,140,255,0.3); }
+.acc-pill.emergent { color: var(--green); border-color: rgba(53,217,160,0.3); }
+.acc-pill.base44 { color: var(--amber); border-color: rgba(255,178,36,0.3); }
+
 /* ===== The DelQuro Files Pro — Platform Links & AI Intake Styles ===== */
 .btn.link-btn.emergent { border-color: rgba(53,217,160,0.4); color: var(--green); background: rgba(53,217,160,0.08); }
 .btn.link-btn.emergent:hover { background: rgba(53,217,160,0.14); }
@@ -1314,29 +1335,47 @@ function renderIntake() {
                 </div>
               </label>
 
-              <!-- 4 Platform Links Group -->
+              <!-- Logged-in User ID -->
+              <label class="field">
+                <span class="field-label">Primary Logged-in User ID / Handle (e.g. @planex)</span>
+                <input type="text" id="draft-user-id" value="${esc(draft.user_id || "")}" placeholder="@planex or username">
+              </label>
+
+              <!-- Platform URLs and Logged-in Accounts -->
               <div class="links-group-box">
-                <span class="group-label">Platform URLs</span>
+                <span class="group-label">Platform URLs &amp; Logged-in Account Handles</span>
                 <div class="links-grid">
-                  <label class="field link-field arena-field">
-                    <span class="field-label">${icon("arena", 13)} arena.ai URL</span>
-                    <input type="url" id="draft-arena" value="${esc(draft.arena_link || "")}" placeholder="https://arena.ai/…">
-                  </label>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label class="field link-field arena-field" style="margin-bottom:0;">
+                      <span class="field-label">${icon("arena", 13)} arena.ai URL</span>
+                      <input type="url" id="draft-arena" value="${esc(draft.arena_link || "")}" placeholder="https://arena.ai/…">
+                    </label>
+                    <input type="text" id="draft-arena-user" value="${esc(draft.arena_user || "")}" placeholder="Arena User ID (e.g. @planex)" style="font-size:12px; padding:6px 9px;">
+                  </div>
 
-                  <label class="field link-field github-field">
-                    <span class="field-label">${icon("github", 13)} github.com URL</span>
-                    <input type="url" id="draft-github" value="${esc(draft.github_link || "")}" placeholder="https://github.com/…">
-                  </label>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label class="field link-field github-field" style="margin-bottom:0;">
+                      <span class="field-label">${icon("github", 13)} github.com URL</span>
+                      <input type="url" id="draft-github" value="${esc(draft.github_link || "")}" placeholder="https://github.com/…">
+                    </label>
+                    <input type="text" id="draft-github-user" value="${esc(draft.github_user || "")}" placeholder="GitHub Account/Org (e.g. PlanExServices)" style="font-size:12px; padding:6px 9px;">
+                  </div>
 
-                  <label class="field link-field emergent-field">
-                    <span class="field-label">${icon("emergent", 13)} emergent.sh URL</span>
-                    <input type="url" id="draft-emergent" value="${esc(draft.emergent_link || "")}" placeholder="https://emergent.sh/…">
-                  </label>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label class="field link-field emergent-field" style="margin-bottom:0;">
+                      <span class="field-label">${icon("emergent", 13)} emergent.sh URL</span>
+                      <input type="url" id="draft-emergent" value="${esc(draft.emergent_link || "")}" placeholder="https://emergent.sh/…">
+                    </label>
+                    <input type="text" id="draft-emergent-user" value="${esc(draft.emergent_user || "")}" placeholder="Emergent User ID (e.g. planex)" style="font-size:12px; padding:6px 9px;">
+                  </div>
 
-                  <label class="field link-field base44-field">
-                    <span class="field-label">${icon("base44", 13)} base44.com URL</span>
-                    <input type="url" id="draft-base44" value="${esc(draft.base44_link || "")}" placeholder="https://base44.com/…">
-                  </label>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label class="field link-field base44-field" style="margin-bottom:0;">
+                      <span class="field-label">${icon("base44", 13)} base44.com URL</span>
+                      <input type="url" id="draft-base44" value="${esc(draft.base44_link || "")}" placeholder="https://base44.com/…">
+                    </label>
+                    <input type="text" id="draft-base44-user" value="${esc(draft.base44_user || "")}" placeholder="Base44 User ID (e.g. planex)" style="font-size:12px; padding:6px 9px;">
+                  </div>
                 </div>
               </div>
 
@@ -1568,7 +1607,10 @@ function projectCard(p) {
 
   return `<div class="card project-card" data-action="open-project" data-id="${p.id}">
     <div class="pc-head">
-      <h3 class="pc-name">${esc(p.name)}</h3>
+      <div>
+        <h3 class="pc-name">${esc(p.name)}</h3>
+        ${(p.user_id || p.arena_user || p.github_user) ? `<span class="pc-user-badge" title="Logged-in User/Account">${icon("robot", 11)} ${esc(p.user_id || p.arena_user || p.github_user)}</span>` : ""}
+      </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <select class="mini proj-status-sel" data-action="set-project-status" data-id="${p.id}" title="Change status (auto-pushes to GitHub)">
           ${["active", "planned", "paused", "shipped", "archived"].map(s => `<option value="${s}" ${p.status === s ? "selected" : ""}>${cap(s)}</option>`).join("")}
@@ -1593,10 +1635,10 @@ function projectCard(p) {
 
     ${(() => {
       const active = [];
-      if (p.arena_link) active.push(linkBtn("arena", p.arena_link, "Arena.ai", "arena", p.id));
-      if (p.github_link) active.push(linkBtn("github", p.github_link, "GitHub", "github", p.id));
-      if (p.emergent_link) active.push(linkBtn("emergent", p.emergent_link, "Emergent.sh", "emergent", p.id));
-      if (p.base44_link) active.push(linkBtn("base44", p.base44_link, "Base44.com", "base44", p.id));
+      if (p.arena_link) active.push(linkBtn("arena", p.arena_link, "Arena.ai", "arena", p.id, p.arena_user || p.user_id));
+      if (p.github_link) active.push(linkBtn("github", p.github_link, "GitHub", "github", p.id, p.github_user || p.user_id));
+      if (p.emergent_link) active.push(linkBtn("emergent", p.emergent_link, "Emergent.sh", "emergent", p.id, p.emergent_user || p.user_id));
+      if (p.base44_link) active.push(linkBtn("base44", p.base44_link, "Base44.com", "base44", p.id, p.base44_user || p.user_id));
       return active.length ? `<div class="pc-links">${active.join("")}</div>` : "";
     })()}
 
@@ -1613,15 +1655,16 @@ function projectCard(p) {
   </div>`;
 }
 
-function linkBtn(kind, url, label, iconName, pid) {
+function linkBtn(kind, url, label, iconName, pid, userId = "") {
   const brandNames = { arena: "Arena.ai", github: "GitHub", emergent: "Emergent.sh", base44: "Base44.com" };
-  const displayLabel = label || brandNames[kind] || kind;
+  const baseLabel = label || brandNames[kind] || kind;
+  const displayLabel = userId ? `${baseLabel} (${userId})` : baseLabel;
   if (!url) {
     return `<button class="btn link-btn ${kind} off" data-action="edit-project" data-id="${pid}" title="Set ${brandNames[kind] || kind} URL">${icon(iconName, 13)} Set ${brandNames[kind] || kind}</button>`;
   }
   return `<div class="link-wrap">
-    <a class="btn link-btn ${kind}" href="${esc(url)}" target="_blank" rel="noopener" title="Open in ${brandNames[kind] || kind}">
-      ${icon(iconName, 13)} ${displayLabel} ↗
+    <a class="btn link-btn ${kind}" href="${esc(url)}" target="_blank" rel="noopener" title="Open ${brandNames[kind] || kind}${userId ? ' (Logged in as: ' + esc(userId) + ')' : ''}">
+      ${icon(iconName, 13)} ${esc(displayLabel)} ↗
     </a>
     <button class="icon-btn mini" data-action="copy-link" data-url="${esc(url)}" title="Copy ${brandNames[kind] || kind} URL">
       ${icon("copy", 12)}
@@ -1656,6 +1699,18 @@ function renderProject(id) {
             <span>WHAT SETS THIS IDEA APART · THE EDGE</span>
           </div>
           <p class="pd-edge-desc">${esc(p.differentiator)}</p>
+        </div>` : ""}
+
+      ${(p.user_id || p.arena_user || p.github_user || p.emergent_user || p.base44_user) ? `
+        <div class="pd-accounts-banner">
+          <span class="pd-acc-title">LOGGED-IN USER IDENTITIES &amp; PLATFORM ACCOUNTS:</span>
+          <div class="pd-acc-pills">
+            ${p.user_id ? `<span class="acc-pill general">${icon("robot", 11)} User: <strong>${esc(p.user_id)}</strong></span>` : ""}
+            ${p.arena_user ? `<span class="acc-pill arena">${icon("arena", 11)} Arena: <strong>${esc(p.arena_user)}</strong></span>` : ""}
+            ${p.github_user ? `<span class="acc-pill github">${icon("github", 11)} GitHub: <strong>${esc(p.github_user)}</strong></span>` : ""}
+            ${p.emergent_user ? `<span class="acc-pill emergent">${icon("emergent", 11)} Emergent: <strong>${esc(p.emergent_user)}</strong></span>` : ""}
+            ${p.base44_user ? `<span class="acc-pill base44">${icon("base44", 11)} Base44: <strong>${esc(p.base44_user)}</strong></span>` : ""}
+          </div>
         </div>` : ""}
 
       ${stack.length ? `<div class="chips">${stack.map(s => `<span class="chip mono">${esc(s)}</span>`).join("")}</div>` : ""}
@@ -2385,7 +2440,12 @@ Whenever you write code, propose an idea, or finish a feature for me, ALWAYS PRI
    - Name & Tagline
    - Description (STRICT MAXIMUM 120 WORDS)
    - Tech Stack
-   - Platform Links (arena.ai, github.com, emergent.sh, base44.com)
+   - Logged-in User Account: user_id (e.g. @planex)
+   - Platform Links & Logged-in Accounts:
+     * arena.ai (Link + arena_user handle)
+     * github.com (Link + github_user account)
+     * emergent.sh (Link + emergent_user handle)
+     * base44.com (Link + base44_user handle)
    - The Edge (What sets this idea apart from others in the same field)
 
 2. The ready-to-run curl upload command:
@@ -2397,10 +2457,15 @@ curl -X POST https://static-upload.onrender.com/api/intake \\
     "tagline": "<Punchy one-sentence summary>",
     "description": "<Concise overview of what it does — STRICT MAXIMUM 120 WORDS>",
     "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
+    "user_id": "<Your primary logged-in user handle, e.g. @planex>",
     "arena_link": "<https://arena.ai/... or placeholder>",
+    "arena_user": "<Logged-in Arena.ai user ID / handle, e.g. @planex>",
     "github_link": "<https://github.com/... or placeholder>",
+    "github_user": "<Logged-in GitHub account / org, e.g. PlanExServices>",
     "emergent_link": "<https://emergent.sh/... or placeholder>",
+    "emergent_user": "<Logged-in Emergent.sh user ID / handle>",
     "base44_link": "<https://base44.com/... or placeholder>",
+    "base44_user": "<Logged-in Base44.com user ID / handle>",
     "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
     "filename": "<main file name, e.g. app.py, agent.tsx>",
     "code": "<source code snippet or key implementation>"
@@ -2783,9 +2848,14 @@ Example output link from AI:
 
     const stack = ($("#draft-stack") ? $("#draft-stack").value : "").trim();
     const arena_link = ($("#draft-arena") ? $("#draft-arena").value : "").trim();
+    const arena_user = ($("#draft-arena-user") ? $("#draft-arena-user").value : "").trim();
     const github_link = ($("#draft-github") ? $("#draft-github").value : "").trim();
+    const github_user = ($("#draft-github-user") ? $("#draft-github-user").value : "").trim();
     const emergent_link = ($("#draft-emergent") ? $("#draft-emergent").value : "").trim();
+    const emergent_user = ($("#draft-emergent-user") ? $("#draft-emergent-user").value : "").trim();
     const base44_link = ($("#draft-base44") ? $("#draft-base44").value : "").trim();
+    const base44_user = ($("#draft-base44-user") ? $("#draft-base44-user").value : "").trim();
+    const user_id = ($("#draft-user-id") ? $("#draft-user-id").value : "").trim();
     const differentiator = ($("#draft-diff") ? $("#draft-diff").value : "").trim();
     const attachCode = $("#draft-attach-code") ? $("#draft-attach-code").checked : true;
     const code = ($("#draft-code") ? $("#draft-code").value : (state.intakeDraft ? state.intakeDraft.code : "")).trim();
@@ -2797,10 +2867,15 @@ Example output link from AI:
       description: desc,
       status: "active",
       stack,
+      user_id,
       arena_link,
+      arena_user,
       github_link,
+      github_user,
       emergent_link,
+      emergent_user,
       base44_link,
+      base44_user,
       differentiator,
       attached_code: attachCode ? code : "",
       createdAt: nowISO(),
@@ -2890,10 +2965,20 @@ function updateLivePreview() {
   const base44 = ($("#draft-base44") ? $("#draft-base44").value : "") || "";
   const diff = ($("#draft-diff") ? $("#draft-diff").value : "") || "";
 
+  const userId = ($("#draft-user-id") ? $("#draft-user-id").value : "") || "";
+  const arenaUser = ($("#draft-arena-user") ? $("#draft-arena-user").value : "") || "";
+  const ghUser = ($("#draft-github-user") ? $("#draft-github-user").value : "") || "";
+  const emUser = ($("#draft-emergent-user") ? $("#draft-emergent-user").value : "") || "";
+  const b44User = ($("#draft-base44-user") ? $("#draft-base44-user").value : "") || "";
+
   container.innerHTML = projectCard({
     id: 999,
     name, tagline, description: desc, status: "active", stack,
-    arena_link: arena, github_link: github, emergent_link: emergent, base44_link: base44,
+    user_id: userId,
+    arena_link: arena, arena_user: arenaUser,
+    github_link: github, github_user: ghUser,
+    emergent_link: emergent, emergent_user: emUser,
+    base44_link: base44, base44_user: b44User,
     differentiator: diff, attached_code: ""
   });
 }
@@ -2937,7 +3022,7 @@ function initEvents() {
       if (state.intakeDraft) {
         const map = {
           "draft-name": "name", "draft-tagline": "tagline", "draft-desc": "description",
-          "draft-stack": "stack", "draft-arena": "arena_link", "draft-github": "github_link",
+          "draft-stack": "stack", "draft-user-id": "user_id", "draft-arena": "arena_link", "draft-arena-user": "arena_user", "draft-github": "github_link", "draft-github-user": "github_user", "draft-emergent": "emergent_link", "draft-emergent-user": "emergent_user", "draft-base44": "base44_link", "draft-base44-user": "base44_user",
           "draft-emergent": "emergent_link", "draft-base44": "base44_link", "draft-diff": "differentiator",
           "draft-code": "code"
         };

@@ -174,6 +174,23 @@ function analyzeCode(rawCode, filename = "") {
   let emergent = extract(/(https?:\/\/(?:www\.)?emergent\.sh\S*)/i);
   let base44 = extract(/(https?:\/\/(?:www\.)?base44\.com\S*)/i);
 
+  // Extract user IDs and logged-in accounts
+  let userId = extract(/(?:user_id|user|author|creator|account):\s*([^\r\n]+)/i);
+  let arenaUser = extract(/(?:arena_user|arena_id|arena_account|arena\s+user):\s*([^\r\n]+)/i);
+  let githubUser = extract(/(?:github_user|github_account|github\s+user|github\s+org):\s*([^\r\n]+)/i);
+  let emergentUser = extract(/(?:emergent_user|emergent_id|emergent\s+user):\s*([^\r\n]+)/i);
+  let base44User = extract(/(?:base44_user|base44_id|base44\s+user):\s*([^\r\n]+)/i);
+
+  if (!githubUser && github) {
+    const ghM = github.match(/github\.com\/([^\/\s"'\)]+)/i);
+    if (ghM && !["orgs", "topics", "features", "PlanExServices"].includes(ghM[1])) githubUser = ghM[1];
+    else if (ghM) githubUser = ghM[1];
+  }
+  if (!arenaUser && arena) {
+    const arM = arena.match(/arena\.ai\/(?:u|user|@)?([^\/\s"'\)]+)/i);
+    if (arM && !["c", "chat", "app", "api"].includes(arM[1])) arenaUser = arM[1];
+  }
+
   // Clean trailing punctuation from URLs
   [arena, github, emergent, base44].forEach((url, idx) => {
     const cleaned = url ? url.replace(/[,;)"']+$/, "") : "";
@@ -249,10 +266,15 @@ function analyzeCode(rawCode, filename = "") {
     description: desc,
     wordCount: countWords(desc),
     stack: stack || "JavaScript, CSS, HTML",
+    user_id: userId,
     arena_link: arena,
+    arena_user: arenaUser,
     github_link: github,
+    github_user: githubUser,
     emergent_link: emergent,
+    emergent_user: emergentUser,
     base44_link: base44,
+    base44_user: base44User,
     differentiator: diff,
     filename: filename || "snippet.txt",
     code
@@ -497,6 +519,12 @@ const server = http.createServer(async (req, res) => {
       const finalBase44 = (payload.base44_link || payload.base44_url || payload.base44 || analyzed.base44_link).trim();
       const finalDiff = (payload.differentiator || payload.edge || payload.moat || payload.why || payload.sets_apart || analyzed.differentiator).trim();
 
+      const finalUserId = (payload.user_id || payload.userId || payload.user || payload.author || analyzed.user_id || "").trim();
+      const finalArenaUser = (payload.arena_user || payload.arenaUser || analyzed.arena_user || "").trim();
+      const finalGithubUser = (payload.github_user || payload.githubUser || analyzed.github_user || "").trim();
+      const finalEmergentUser = (payload.emergent_user || payload.emergentUser || analyzed.emergent_user || "").trim();
+      const finalBase44User = (payload.base44_user || payload.base44User || analyzed.base44_user || "").trim();
+
       // Enforce 120-word maximum limit on description
       const words = finalDesc.split(/\s+/).filter(Boolean);
       if (words.length > 120) {
@@ -510,10 +538,15 @@ const server = http.createServer(async (req, res) => {
         description: finalDesc,
         wordCount: countWords(finalDesc),
         stack: finalStack,
+        user_id: finalUserId,
         arena_link: finalArena,
+        arena_user: finalArenaUser,
         github_link: finalGithub,
+        github_user: finalGithubUser,
         emergent_link: finalEmergent,
+        emergent_user: finalEmergentUser,
         base44_link: finalBase44,
+        base44_user: finalBase44User,
         differentiator: finalDiff,
         filename: filename,
         code: rawCode,
@@ -575,10 +608,15 @@ const server = http.createServer(async (req, res) => {
         description: desc,
         status: overrides.status || "active",
         stack: overrides.stack || item.stack || "",
+        user_id: overrides.user_id || item.user_id || "",
         arena_link: overrides.arena_link || item.arena_link || "",
+        arena_user: overrides.arena_user || item.arena_user || "",
         github_link: overrides.github_link || item.github_link || "",
+        github_user: overrides.github_user || item.github_user || "",
         emergent_link: overrides.emergent_link || item.emergent_link || "",
+        emergent_user: overrides.emergent_user || item.emergent_user || "",
         base44_link: overrides.base44_link || item.base44_link || "",
+        base44_user: overrides.base44_user || item.base44_user || "",
         differentiator: overrides.differentiator || item.differentiator || "",
         attached_code: overrides.code || item.code || "",
         createdAt: new Date().toISOString(),

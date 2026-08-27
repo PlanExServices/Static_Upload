@@ -112,21 +112,22 @@ function checkRateLimit(ip, limit = 60, windowMs = 60000) {
 
 function isAuthorized(req, parsedUrl, bodyPayload = null) {
   if (!INTAKE_API_KEY) return true; // Open mode if no key configured in env
-  const headerKey = req.headers["x-api-key"] || "";
-  const authHeader = req.headers["authorization"] || "";
+  const expected = (INTAKE_API_KEY || "").trim();
+  const headerKey = (req.headers["x-api-key"] || "").trim();
+  const authHeader = (req.headers["authorization"] || "").trim();
   const bearerToken = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
-  const queryToken = parsedUrl.searchParams.get("token") || parsedUrl.searchParams.get("key") || parsedUrl.searchParams.get("api_key") || "";
+  const queryToken = (parsedUrl.searchParams.get("token") || parsedUrl.searchParams.get("key") || parsedUrl.searchParams.get("api_key") || "").trim();
 
   let bodyKey = "";
   if (bodyPayload && typeof bodyPayload === "object") {
-    bodyKey = bodyPayload.api_key || bodyPayload.apiKey || bodyPayload.key || bodyPayload.token || "";
+    bodyKey = String(bodyPayload.api_key || bodyPayload.apiKey || bodyPayload.key || bodyPayload.token || "").trim();
   }
 
   return (
-    headerKey === INTAKE_API_KEY ||
-    bearerToken === INTAKE_API_KEY ||
-    queryToken === INTAKE_API_KEY ||
-    bodyKey === INTAKE_API_KEY
+    headerKey === expected ||
+    bearerToken === expected ||
+    queryToken === expected ||
+    bodyKey === expected
   );
 }
 

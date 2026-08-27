@@ -2373,37 +2373,46 @@ const actions = {
   },
 
     "open-ai-prompt-modal": () => {
+    let currentKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
     const intakeUrl = "https://static-upload.onrender.com/api/intake";
-    const apiKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
-    const authHeaderNote = `\n  -H "X-API-Key: ${apiKey}"`;
     const siteUrl = "https://planexservices.github.io/Static_Upload/";
 
-    const promptText = `You are an AI assistant helping me build and track software in "The DelQuro Files".
-Whenever you write code, propose an idea, or finish a feature for me:
-1. Formulate a structured project intake card.
-2. Send an HTTP POST request to my live receiver endpoint:
-   ${intakeUrl}
+    function buildPrompts(keyVal) {
+      const pText = `You are an AI assistant helping me build and track software in "The DelQuro Files".
+Whenever you write code, propose an idea, or finish a feature for me, ALWAYS PRINT OUT:
 
-JSON Payload Format:
-{
-  "name": "<Project Name>",
-  "tagline": "<Punchy one-sentence summary>",
-  "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
-  "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
-  "arena_link": "<https://arena.ai/... or placeholder>",
-  "github_link": "<https://github.com/... or placeholder>",
-  "emergent_link": "<https://emergent.sh/... or placeholder>",
-  "base44_link": "<https://base44.com/... or placeholder>",
-  "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
-  "filename": "<main file name, e.g. app.py, agent.tsx>",
-  "code": "<source code snippet or key implementation>"
-}`;
+1. A visual Project Card summary for user review:
+   - Name & Tagline
+   - Description (STRICT MAXIMUM 120 WORDS)
+   - Tech Stack
+   - Platform Links (arena.ai, github.com, emergent.sh, base44.com)
+   - The Edge (What sets this idea apart from others in the same field)
 
-    const curlCmd = `curl -X POST https://static-upload.onrender.com/api/intake \\
+2. The ready-to-run curl upload command:
+curl -X POST https://static-upload.onrender.com/api/intake \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: $INTAKE_API_KEY" \\
+  -d '{
+    "api_key": "${keyVal}",
+    "name": "<Project Name>",
+    "tagline": "<Punchy one-sentence summary>",
+    "description": "<Concise overview of what it does — STRICT MAXIMUM 120 WORDS>",
+    "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
+    "arena_link": "<https://arena.ai/... or placeholder>",
+    "github_link": "<https://github.com/... or placeholder>",
+    "emergent_link": "<https://emergent.sh/... or placeholder>",
+    "base44_link": "<https://base44.com/... or placeholder>",
+    "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
+    "filename": "<main file name, e.g. app.py, agent.tsx>",
+    "code": "<source code snippet or key implementation>"
+  }'
+
+3. The exact JSON payload block above so the user can easily copy and input it into DelQuro Files!`;
+
+      const cCmd = `curl -X POST https://static-upload.onrender.com/api/intake \\
+  -H "Content-Type: application/json" \\
   -d @- << 'EOF'
 {
+  "api_key": "${keyVal}",
   "name": "HyperAgent Router",
   "tagline": "Autonomous multi-model query router with sub-50ms latency",
   "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",
@@ -2418,66 +2427,11 @@ JSON Payload Format:
 }
 EOF`;
 
-    const cursorRule = `# DelQuro Files Integration Rule (.cursorrules / System Prompt)
-Whenever finishing a task, milestone, or component:
-1. Formulate an intake card with:
-   - name: Project/Feature name
-   - tagline: One-line hook
-   - description: STRICTLY under 120 words
-   - stack: Comma-separated languages & libraries
-   - arena_link, github_link, emergent_link, base44_link
-   - differentiator: What sets it apart (The Edge)
-   - filename, code: Implementation code
-2. Send HTTP POST request to:
-   ${intakeUrl}
-   with header:
-   X-API-Key: $INTAKE_API_KEY`;
-
-    const linkPrompt = `Ask your AI assistant:
-"Generate a 1-click upload link to ${siteUrl} with the project card JSON encoded in the URL hash #intake=..."
-
-Example output link from AI:
-[🚀 Upload to DelQuro Files](${siteUrl}#intake=%7B%22name%22%3A%22My%20Project%22%2C%22tagline%22%3A%22Instant%20card%22%2C%22description%22%3A%22120%20words%20max%22%2C%22stack%22%3A%22React%22%7D)`;
-
-    openModal(`
-      <div class="modal-head">
-        <div style="display:flex; align-items:center; gap:8px;">
-          ${icon("robot", 20)}
-          <h3 style="margin:0;">Tell Your AI: Live Receiver Instructions</h3>
-        </div>
-        <button class="icon-btn modal-close">✕</button>
-      </div>
-
-      <div style="margin-bottom:12px; padding:10px 12px; border-radius:10px; background:rgba(56,204,255,0.08); border:1px solid rgba(56,204,255,0.25); font-size:12.5px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <div>
-          <span style="color:var(--cyan); font-weight:700;">LIVE ENDPOINT:</span>
-          <code class="mono" style="color:var(--text);">${intakeUrl}</code>
-        </div>
-        <div style="font-size:11.5px; color:var(--green); font-family:var(--mono);">
-          🔒 Auth Header: <code>X-API-Key: $INTAKE_API_KEY</code>
-        </div>
-      </div>
-
-      <div class="prompt-tabs">
-        <button class="ptab-btn on" id="ptab-prompt">🤖 AI Webhook Prompt</button>
-        <button class="ptab-btn" id="ptab-json">💾 JSON for File Import</button>
-        <button class="ptab-btn" id="ptab-curl">⚡ Terminal curl</button>
-        <button class="ptab-btn" id="ptab-cursor">📝 Cursor / .cursorrules</button>
-        <button class="ptab-btn" id="ptab-link">🔗 1-Click Link</button>
-      </div>
-
-      <div id="pcontent" class="prompt-content">${esc(promptText)}</div>
-
-      <div class="modal-actions" style="margin-top:16px;">
-        <button class="btn ghost modal-close">Close</button>
-        <button class="btn primary" id="copy-ai-inst">${icon("copy", 14)} Copy to Clipboard</button>
-      </div>
-    `);
-
-        const jsonImportPrompt = `Ask your AI assistant:
-"Generate the project card as a clean JSON file that I can import into The DelQuro Files using the sidebar 'Import' button:
+      const jImport = `Ask your AI assistant:
+"Generate the project card as a clean JSON file containing api_key '${keyVal}' that I can import into The DelQuro Files using the sidebar 'Import' button:
 
 {
+  \"api_key\": \"${keyVal}\",
   \"name\": \"<Project Name>\",
   \"tagline\": \"<Punchy one-sentence summary>\",
   \"description\": \"<Concise overview, architecture, and goals — STRICT MAXIMUM 120 WORDS>\",
@@ -2491,33 +2445,136 @@ Example output link from AI:
   \"code\": \"<source code snippet or key implementation>\"
 }"
 
-How to import:
-1. Save the AI output as "project.json" (or copy it).
-2. Click "⇧ Import" in the sidebar (or "➕ Paste / Drop Code" in AI Intake).
-3. The card is instantly created with all 8 fields, word count verified, and source code registered!`;
+How to input:
+1. Save the AI output as 'project.json' (or copy it).
+2. Click '⇧ Import' in sidebar (or '➕ Paste / Drop Code' in AI Intake).
+3. DelQuro Files creates the card with all 8 fields, verifies word count, and links source code!`;
+
+      const curRule = `# DelQuro Files Integration Rule (.cursorrules / System Prompt)
+Whenever finishing a task, milestone, or component:
+1. Formulate an intake card (Name, Tagline, Description <= 120 words, Stack, Links, Differentiator, Code).
+2. Send HTTP POST to https://static-upload.onrender.com/api/intake with JSON payload including "api_key": "${keyVal}".`;
+
+      const lPrompt = `Ask your AI assistant:
+"Generate a 1-click upload link to ${siteUrl} with the project card JSON encoded in the URL hash #intake=..."
+
+Example output link from AI:
+[🚀 Upload to DelQuro Files](${siteUrl}#intake=%7B%22name%22%3A%22My%20Project%22%2C%22tagline%22%3A%22Instant%20card%22%2C%22description%22%3A%22120%20words%20max%22%2C%22stack%22%3A%22React%22%7D)`;
+
+      return { pText, cCmd, jImport, curRule, lPrompt };
+    }
+
+    openModal(`
+      <div class="modal-head">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${icon("robot", 20)}
+          <h3 style="margin:0;">Tell Your AI: Verified Intake Instructions</h3>
+        </div>
+        <button class="icon-btn modal-close">✕</button>
+      </div>
+
+      <!-- Key verification & live sync bar -->
+      <div style="margin-bottom:14px; padding:12px 14px; border-radius:12px; background:var(--panel2); border:1px solid var(--border2);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+          <span style="font-size:12px; font-weight:700; color:var(--cyan); font-family:var(--mono);">🔑 ACTIVE API KEY:</span>
+          <span id="key-verify-badge" style="font-size:11px; font-family:var(--mono); color:var(--green); font-weight:600;">● Verified on Render</span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="text" id="prompt-active-key" value="${esc(currentKey)}" style="flex:1; font-family:var(--mono); font-size:12px; padding:6px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text);">
+          <button type="button" class="btn ghost sm" id="test-prompt-key-btn" style="font-size:11.5px; white-space:nowrap;">🔍 Test Key</button>
+        </div>
+      </div>
+
+      <div class="prompt-tabs">
+        <button class="ptab-btn on" id="ptab-prompt">🤖 AI Prompt (Print &amp; Upload)</button>
+        <button class="ptab-btn" id="ptab-json">💾 JSON for Input / Import</button>
+        <button class="ptab-btn" id="ptab-curl">⚡ Terminal curl</button>
+        <button class="ptab-btn" id="ptab-cursor">📝 Cursor Rule</button>
+        <button class="ptab-btn" id="ptab-link">🔗 1-Click Link</button>
+      </div>
+
+      <div id="pcontent" class="prompt-content"></div>
+
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn ghost modal-close">Close</button>
+        <button class="btn primary" id="copy-ai-inst">${icon("copy", 14)} Copy to Clipboard</button>
+      </div>
+    `);
+
+    let activeTab = "prompt";
+    const pcontent = $("#pcontent");
+    const keyInput = $("#prompt-active-key");
+    const testBtn = $("#test-prompt-key-btn");
+    const badgeEl = $("#key-verify-badge");
+
+    function renderCurrentTab() {
+      const p = buildPrompts(currentKey);
+      if (activeTab === "prompt") pcontent.textContent = p.pText;
+      else if (activeTab === "json") pcontent.textContent = p.jImport;
+      else if (activeTab === "curl") pcontent.textContent = p.cCmd;
+      else if (activeTab === "cursor") pcontent.textContent = p.curRule;
+      else if (activeTab === "link") pcontent.textContent = p.lPrompt;
+    }
+
+    renderCurrentTab();
+
+    // Live update when key changes
+    keyInput.oninput = () => {
+      currentKey = keyInput.value.trim() || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+      localStorage.setItem("delquro_api_key", currentKey);
+      badgeEl.textContent = "○ Key Updated";
+      badgeEl.style.color = "var(--amber)";
+      renderCurrentTab();
+    };
+
+    // Test Key against Render
+    testBtn.onclick = async () => {
+      badgeEl.textContent = "Testing...";
+      badgeEl.style.color = "var(--muted)";
+      try {
+        const res = await fetch("https://static-upload.onrender.com/api/verify-key", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Key": currentKey },
+          body: JSON.stringify({ api_key: currentKey })
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          badgeEl.textContent = "✅ Verified on Render!";
+          badgeEl.style.color = "var(--green)";
+          toast("API Key is 100% active and verified on Render! ✓");
+        } else {
+          badgeEl.textContent = "❌ Rejected by Server";
+          badgeEl.style.color = "var(--red)";
+          toast("Key was rejected by server", "error");
+        }
+      } catch (err) {
+        badgeEl.textContent = "⚠️ Server waking up...";
+        badgeEl.style.color = "var(--amber)";
+      }
+    };
 
     const tabPrompt = $("#ptab-prompt");
     const tabJson = $("#ptab-json");
     const tabCurl = $("#ptab-curl");
     const tabCursor = $("#ptab-cursor");
     const tabLink = $("#ptab-link");
-    const pcontent = $("#pcontent");
 
-    const updateTab = (btn, content) => {
+    const updateTab = (btn, tabName) => {
       [tabPrompt, tabJson, tabCurl, tabCursor, tabLink].forEach(b => b.classList.remove("on"));
       btn.classList.add("on");
-      pcontent.textContent = content;
+      activeTab = tabName;
+      renderCurrentTab();
     };
 
-    tabPrompt.onclick = () => updateTab(tabPrompt, promptText);
-    tabJson.onclick = () => updateTab(tabJson, jsonImportPrompt);
-    tabCurl.onclick = () => updateTab(tabCurl, curlCmd);
-    tabCursor.onclick = () => updateTab(tabCursor, cursorRule);
-    tabLink.onclick = () => updateTab(tabLink, linkPrompt);
+    tabPrompt.onclick = () => updateTab(tabPrompt, "prompt");
+    tabJson.onclick = () => updateTab(tabJson, "json");
+    tabCurl.onclick = () => updateTab(tabCurl, "curl");
+    tabCursor.onclick = () => updateTab(tabCursor, "cursor");
+    tabLink.onclick = () => updateTab(tabLink, "link");
 
     $("#copy-ai-inst").onclick = () => {
       copyText(pcontent.textContent);
-      toast("Instructions copied to clipboard! Paste into your AI ✓");
+      toast("Copied to clipboard! Paste into your AI ✓");
     };
   },
 

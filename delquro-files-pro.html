@@ -1956,7 +1956,8 @@ Example output link from AI:
       </div>
 
       <div class="prompt-tabs">
-        <button class="ptab-btn on" id="ptab-prompt">🤖 AI Prompt (Claude/ChatGPT/Arena)</button>
+        <button class="ptab-btn on" id="ptab-prompt">🤖 AI Webhook Prompt</button>
+        <button class="ptab-btn" id="ptab-json">💾 JSON for File Import</button>
         <button class="ptab-btn" id="ptab-curl">⚡ Terminal curl</button>
         <button class="ptab-btn" id="ptab-cursor">📝 Cursor / .cursorrules</button>
         <button class="ptab-btn" id="ptab-link">🔗 1-Click Link</button>
@@ -1970,19 +1971,43 @@ Example output link from AI:
       </div>
     `);
 
+        const jsonImportPrompt = `Ask your AI assistant:
+"Generate the project card as a clean JSON file that I can import into The DelQuro Files using the sidebar 'Import' button:
+
+{
+  \"name\": \"<Project Name>\",
+  \"tagline\": \"<Punchy one-sentence summary>\",
+  \"description\": \"<Concise overview, architecture, and goals — STRICT MAXIMUM 120 WORDS>\",
+  \"stack\": \"<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>\",
+  \"arena_link\": \"<https://arena.ai/... or placeholder>\",
+  \"github_link\": \"<https://github.com/... or placeholder>\",
+  \"emergent_link\": \"<https://emergent.sh/... or placeholder>\",
+  \"base44_link\": \"<https://base44.com/... or placeholder>\",
+  \"differentiator\": \"<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>\",
+  \"filename\": \"<main file name, e.g. app.py, agent.tsx>\",
+  \"code\": \"<source code snippet or key implementation>\"
+}"
+
+How to import:
+1. Save the AI output as "project.json" (or copy it).
+2. Click "⇧ Import" in the sidebar (or "➕ Paste / Drop Code" in AI Intake).
+3. The card is instantly created with all 8 fields, word count verified, and source code registered!`;
+
     const tabPrompt = $("#ptab-prompt");
+    const tabJson = $("#ptab-json");
     const tabCurl = $("#ptab-curl");
     const tabCursor = $("#ptab-cursor");
     const tabLink = $("#ptab-link");
     const pcontent = $("#pcontent");
 
     const updateTab = (btn, content) => {
-      [tabPrompt, tabCurl, tabCursor, tabLink].forEach(b => b.classList.remove("on"));
+      [tabPrompt, tabJson, tabCurl, tabCursor, tabLink].forEach(b => b.classList.remove("on"));
       btn.classList.add("on");
       pcontent.textContent = content;
     };
 
     tabPrompt.onclick = () => updateTab(tabPrompt, promptText);
+    tabJson.onclick = () => updateTab(tabJson, jsonImportPrompt);
     tabCurl.onclick = () => updateTab(tabCurl, curlCmd);
     tabCursor.onclick = () => updateTab(tabCursor, cursorRule);
     tabLink.onclick = () => updateTab(tabLink, linkPrompt);
@@ -2450,10 +2475,100 @@ $("#import-file").addEventListener("change", e => {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const data = JSON.parse(reader.result);
-      if (!data || !data.projects) throw new Error("not a DelQuro backup");
-      db = Object.assign(emptyDB(), data);
-      persist(); render(); toast("Backup restored ✓");
+      let raw = (reader.result || "").trim();
+      // Strip markdown code fences if user saved direct AI chat response: ```json ... ```
+      raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+      const data = JSON.parse(raw);
+
+      // Case 1: Full DelQuro backup (contains projects array alongside ideas, builds, etc.)
+      if (data && Array.isArray(data.projects)) {
+        db = Object.assign(emptyDB(), data);
+        if (!db.inbox) db.inbox = [];
+        persist(); render(); toast("Full DelQuro backup restored ✓");
+        return;
+      }
+
+      // Case 2: Array of project cards [ { name: "...", ... }, ... ]
+      if (Array.isArray(data)) {
+        let count = 0;
+        data.forEach(item => {
+          if (item && (item.name || item.title)) {
+            const analyzed = analyzeCodeInBrowser(item.code || "", item.filename || "");
+            let desc = (item.description || item.desc || analyzed.description || "").trim();
+            const words = desc.split(/\s+/).filter(Boolean);
+            if (words.length > 120) desc = words.slice(0, 120).join(" ") + "...";
+
+            const newProj = {
+              id: uid(),
+              name: (item.name || item.title || analyzed.name).trim(),
+              tagline: (item.tagline || item.summary || analyzed.tagline).trim(),
+              description: desc,
+              status: item.status || "active",
+              stack: (item.stack || analyzed.stack).trim(),
+              arena_link: (item.arena_link || item.arena_url || analyzed.arena_link).trim(),
+              github_link: (item.github_link || item.github_url || analyzed.github_link).trim(),
+              emergent_link: (item.emergent_link || item.emergent_url || analyzed.emergent_link).trim(),
+              base44_link: (item.base44_link || item.base44_url || analyzed.base44_link).trim(),
+              differentiator: (item.differentiator || item.edge || analyzed.differentiator).trim(),
+              attached_code: item.code || "",
+              createdAt: nowISO(),
+              updatedAt: nowISO()
+            };
+            db.projects.unshift(newProj);
+            count++;
+          }
+        });
+        persist(); render();
+        toast(`Imported ${count} project cards successfully! 🚀`);
+        go("projects");
+        return;
+      }
+
+      // Case 3: Single project card or AI intake payload { name: "...", description: "...", ... }
+      if (data && (data.name || data.title || data.code || data.description)) {
+        const analyzed = analyzeCodeInBrowser(data.code || "", data.filename || "");
+        let desc = (data.description || data.desc || analyzed.description || "").trim();
+        const words = desc.split(/\s+/).filter(Boolean);
+        if (words.length > 120) desc = words.slice(0, 120).join(" ") + "...";
+
+        const newProj = {
+          id: uid(),
+          name: (data.name || data.title || analyzed.name).trim(),
+          tagline: (data.tagline || data.summary || analyzed.tagline).trim(),
+          description: desc,
+          status: data.status || "active",
+          stack: (data.stack || analyzed.stack).trim(),
+          arena_link: (data.arena_link || data.arena_url || analyzed.arena_link).trim(),
+          github_link: (data.github_link || data.github_url || analyzed.github_link).trim(),
+          emergent_link: (data.emergent_link || data.emergent_url || analyzed.emergent_link).trim(),
+          base44_link: (data.base44_link || data.base44_url || analyzed.base44_link).trim(),
+          differentiator: (data.differentiator || data.edge || analyzed.differentiator).trim(),
+          attached_code: data.code || "",
+          createdAt: nowISO(),
+          updatedAt: nowISO()
+        };
+
+        db.projects.unshift(newProj);
+
+        if (newProj.attached_code) {
+          db.code.unshift({
+            id: uid(),
+            projectId: newProj.id,
+            title: (data.filename || newProj.name) + " (Source)",
+            language: (newProj.stack || "code").split(",")[0].toLowerCase().trim(),
+            notes: `Imported via JSON for ${newProj.name}`,
+            code: newProj.attached_code,
+            createdAt: nowISO()
+          });
+        }
+
+        persist();
+        toast(`Project "${newProj.name}" imported into DelQuro Files! 🚀`);
+        go("project", newProj.id);
+        return;
+      }
+
+      throw new Error("Unrecognized JSON format. File must contain project card details or a DelQuro backup.");
     } catch (err) { toast("Import failed: " + err.message, "error"); }
     e.target.value = "";
   };

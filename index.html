@@ -2386,7 +2386,6 @@ Whenever you write code, propose an idea, or finish a feature for me:
 
 JSON Payload Format:
 {
-  "api_key": "f67d832c80a1fe6bfdce41f3d3ea94bd",
   "name": "<Project Name>",
   "tagline": "<Punchy one-sentence summary>",
   "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
@@ -2402,10 +2401,9 @@ JSON Payload Format:
 
     const curlCmd = `curl -X POST https://static-upload.onrender.com/api/intake \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: f67d832c80a1fe6bfdce41f3d3ea94bd" \\
+  -H "X-API-Key: $INTAKE_API_KEY" \\
   -d @- << 'EOF'
 {
-  "api_key": "f67d832c80a1fe6bfdce41f3d3ea94bd",
   "name": "HyperAgent Router",
   "tagline": "Autonomous multi-model query router with sub-50ms latency",
   "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",
@@ -2430,8 +2428,10 @@ Whenever finishing a task, milestone, or component:
    - arena_link, github_link, emergent_link, base44_link
    - differentiator: What sets it apart (The Edge)
    - filename, code: Implementation code
-2. POST the JSON payload to:
-   ${intakeUrl}`;
+2. Send HTTP POST request to:
+   ${intakeUrl}
+   with header:
+   X-API-Key: $INTAKE_API_KEY`;
 
     const linkPrompt = `Ask your AI assistant:
 "Generate a 1-click upload link to ${siteUrl} with the project card JSON encoded in the URL hash #intake=..."
@@ -2448,9 +2448,14 @@ Example output link from AI:
         <button class="icon-btn modal-close">✕</button>
       </div>
 
-      <div style="margin-bottom:12px; padding:10px 12px; border-radius:10px; background:rgba(56,204,255,0.08); border:1px solid rgba(56,204,255,0.25); font-size:12.5px;">
-        <span style="color:var(--cyan); font-weight:700;">LIVE ENDPOINT:</span>
-        <code class="mono" style="color:var(--text);">${intakeUrl}</code>
+      <div style="margin-bottom:12px; padding:10px 12px; border-radius:10px; background:rgba(56,204,255,0.08); border:1px solid rgba(56,204,255,0.25); font-size:12.5px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <span style="color:var(--cyan); font-weight:700;">LIVE ENDPOINT:</span>
+          <code class="mono" style="color:var(--text);">${intakeUrl}</code>
+        </div>
+        <div style="font-size:11.5px; color:var(--green); font-family:var(--mono);">
+          🔒 Auth Header: <code>X-API-Key: $INTAKE_API_KEY</code>
+        </div>
       </div>
 
       <div class="prompt-tabs">

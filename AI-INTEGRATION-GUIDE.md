@@ -16,17 +16,33 @@ Your dashboard sites:
 
 ---
 
-## 🤖 Tell Your AI How to Upload Code
+## 🔒 Security: Local Environment Variable Mode
 
-### Option 1: Give This Prompt to Any AI (Claude, ChatGPT, Arena Agent)
-Copy and paste this instruction into your conversation with your AI:
+To prevent your secret key from ever being exposed in public chat prompts, your system uses the **Local Environment Variable Mode**:
+- On Render, the server enforces your secret key (`INTAKE_API_KEY`).
+- On your computer or local shell, you store the key once in your environment:
+  ```bash
+  export INTAKE_API_KEY="f67d832c80a1fe6bfdce41f3d3ea94bd"
+  ```
+  *(Add this line to your `~/.bashrc` or `~/.zshrc` so it is always available).*
+- In chat prompts and curl scripts, you and the AI reference **`$INTAKE_API_KEY`**.
+- When the command runs, your local shell evaluates `$INTAKE_API_KEY` automatically. **Your secret key is never leaked in the public chat!**
+
+---
+
+## 🤖 Tell Your AI How to Upload Code (Safe for Public Chats)
+
+### Option 1: Safe Public Chat Prompt (Claude, ChatGPT, Arena Agent)
+Copy and paste this prompt into any public or shared AI chat:
 
 ```markdown
 You are helping me build and organize projects for "The DelQuro Files".
-Whenever you propose an idea, complete a script, or write a feature for me, please output an intake card formatted as JSON and send an HTTP POST request to:
-https://static-upload.onrender.com/api/intake
+Whenever you propose an idea, complete a script, or write a feature for me:
+1. Formulate a structured project intake card conforming to the JSON schema below.
+2. Send an HTTP POST request to: https://static-upload.onrender.com/api/intake
+   (Include the authorization header: -H "X-API-Key: $INTAKE_API_KEY")
 
-JSON format:
+JSON Schema:
 {
   "name": "<Project Name>",
   "tagline": "<Punchy one-sentence summary>",
@@ -42,17 +58,20 @@ JSON format:
 }
 ```
 
-### Option 2: Direct Terminal / CLI Upload (curl)
-Run this command from any terminal or AI environment:
+---
+
+### Option 2: Terminal / CLI Upload (curl)
+Run this command from any terminal or AI coding agent (Cursor, Windsurf, Aider):
 
 ```bash
 curl -X POST https://static-upload.onrender.com/api/intake \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: $INTAKE_API_KEY" \
   -d @- << 'EOF'
 {
   "name": "HyperAgent Router",
   "tagline": "Autonomous multi-model query router with sub-50ms latency",
-  "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models. It features zero-config streaming, automatic fallback handling, and semantic caching. Built for high-throughput production environments that demand enterprise reliability.",
+  "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",
   "stack": "TypeScript, Fastify, Redis, Arena SDK",
   "arena_link": "https://arena.ai/c/hyperagent",
   "github_link": "https://github.com/PlanExServices/Static_Upload",
@@ -65,8 +84,10 @@ curl -X POST https://static-upload.onrender.com/api/intake \
 EOF
 ```
 
+---
+
 ### Option 3: Cursor / Windsurf / Copilot (`.cursorrules`)
-Add this rule to your project's `.cursorrules` or AI instructions file:
+Add this rule to your project's `.cursorrules` or system prompt:
 ```
 When finishing a code milestone or building a new feature:
 1. Formulate a project card definition:
@@ -75,30 +96,14 @@ When finishing a code milestone or building a new feature:
    - stack
    - arena_link, github_link, emergent_link, base44_link
    - differentiator ("what sets this idea apart")
-2. POST the payload to https://static-upload.onrender.com/api/intake so it appears in The DelQuro Files intake staging queue.
+2. Send HTTP POST request to https://static-upload.onrender.com/api/intake using header:
+   X-API-Key: $INTAKE_API_KEY
 ```
-
-### Option 4: Quick Web Dropzone (No Network Access Needed)
-If your AI is running in a locked-down environment without outbound internet access:
-1. Open **[https://static-upload.onrender.com/](https://static-upload.onrender.com/)** or **[https://planexservices.github.io/Static_Upload/](https://planexservices.github.io/Static_Upload/)**.
-2. Click **AI Intake & Studio** in the navigation.
-3. Click the **"Paste / Drop Code"** button.
-4. Paste the code or conversation transcript.
-5. Click **"Analyze & Build Card"** — the built-in parser automatically extracts all 8 fields, enforces the 120-word limit, and loads it into the interactive Card Studio!
 
 ---
 
-## 🛠 File Structure & Deliverables
-
-| File | Description |
-| :--- | :--- |
-| `delquro-files-pro.html` | The complete, upgraded single-file application. Works offline, on GitHub Pages, Emergent, or Base44. |
-| `index.html` | Root entrypoint served by Render, GitHub Pages, and dev servers. |
-| `server.js` | Zero-dependency Node.js server handling the live receiver (`/api/intake`), project API, and static files. |
-| `data/delquro-db.json` | Persisted database storing projects, ideas, changelog, builds, code, and dialogues. |
-| `data/inbox.json` | Staged AI code uploads waiting to be converted into cards. |
-| `test-upload.sh` | Executable verification script that tests uploading an AI project payload. |
-| `render.yaml` | Render 1-click blueprint configuration. |
-| `railway.json` | Railway configuration. |
-| `AI-INTEGRATION-GUIDE.md` | This reference guide and prompt cheat sheet. |
-| `RENDER-DEPLOYMENT.md` | Complete Render setup manual. |
+### Option 4: Quick Web Dropzone (No Keys, 100% Offline)
+If you don't want any network calls:
+1. Open **[https://static-upload.onrender.com/](https://static-upload.onrender.com/)** or **[https://planexservices.github.io/Static_Upload/](https://planexservices.github.io/Static_Upload/)**.
+2. Click **AI Intake & Studio** > **"➕ Paste / Drop Code"**.
+3. Paste the code or prompt response — the built-in parser automatically extracts all 8 fields, enforces the 120-word limit, and loads it into the interactive Card Studio!

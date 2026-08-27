@@ -1,62 +1,28 @@
 {
-  "nextId": 5,
-  "projects": [
+  "nextId": 1,
+  "projects": [],
+  "ideas": [],
+  "changelog": [],
+  "builds": [],
+  "code": [],
+  "dialogues": [],
+  "inbox": [
     {
-      "id": 3,
+      "id": "inbox-1787861886639-307",
       "name": "Idea Labs Explorer",
       "tagline": "A single-file interactive dashboard that turns 242 screenshots into a searchable, cross-linked intelligence hub.",
       "description": "Offline-capable explorer built from the idea labs image drop. Pipeline: every image OCR'd with Tesseract, compressed to embedded base64 thumbnails, then analyst-verified. Frontend is one self-contained HTML file (no dependencies): tabbed interface with global search across names, URLs, prompts, and transcriptions; sortable/filterable card grid of 314 unique websites with outbound links; 9 copy-to-clipboard script/prompt packs; 136 summary cards where each card shows its screenshot, the items listed in it (hyperlinked), and a written-out transcription. Unified sitewide card design system; covers 242/242 images.",
-      "status": "active",
+      "wordCount": 82,
       "stack": "Python 3, Pillow, Tesseract OCR, Vanilla JavaScript, Inline CSS, JSON, Single-file HTML",
       "arena_link": "https://arena.ai/ (Arena.ai Agent Mode session — placeholder)",
       "github_link": "https://github.com/PlanExServices/DelQuro.com/releases/tag/idea-labs-2026-08-27",
       "emergent_link": "https://emergent.sh/ (placeholder)",
       "base44_link": "https://base44.com/ (placeholder)",
       "differentiator": "Zero-dependency single-file app that works inside network-isolated sandboxes; every image is both OCR-transcribed and human-analyst verified; reverse index links each website to the exact screenshots it appeared in, and each image back to the items it lists — no other view of this archive exists.",
-      "attached_code": "// unified card anatomy used sitewide (websites, scripts, summaries)\nfunction cardShell(title, badge, bodyHTML, footerHTML){\n  return `<div class=\"card\">\n    <div class=\"card-h\">${title}${badge||''}</div>\n    <div class=\"card-b\">${bodyHTML}</div>\n    <div class=\"card-f\">${footerHTML}</div>\n  </div>`;\n}\n// reverse index: image -> websites that appear in it\nconst img2sites = {};\nwebsites.forEach(w => w.src.forEach(s => {\n  (s.match(/IMG_\\d+/g)||[]).forEach(m =>\n    (img2sites[m] = img2sites[m] || []).push({label: w.name, url: w.url}));\n}));",
-      "createdAt": "2026-08-27T20:27:35.999Z",
-      "updatedAt": "2026-08-27T20:27:35.999Z"
-    },
-    {
-      "id": 1,
-      "name": "LoopAgent",
-      "tagline": "Autonomous 7-part multi-agent loop harness with independent rubric evaluation and self-improving memory.",
-      "description": "LoopAgent replaces static prompt engineering with a deterministic 7-part autonomous loop harness. Features persistent standards (CLAUDE.md), a 3-agent team (Strategist, Writer, Designer), an independent rubric-based Checker with a strict 95/100 pass bar, continuous memory (MEMORY.md) that converts evaluation deductions into immutable anti-pattern rules, and unattended cloud routines for headless execution.",
-      "status": "active",
-      "stack": "Python, FastAPI, Uvicorn, Vanilla JS, CSS3, SSE Streaming, JSON Storage",
-      "arena_link": "https://arena.ai/agents/loop-agent",
-      "github_link": "https://github.com/delquro/loop-agent",
-      "emergent_link": "https://emergent.sh/loop-agent",
-      "base44_link": "https://base44.com/loop-agent",
-      "differentiator": "Closed-loop autonomous self-correction with an independent auditor that never marks its own homework, strict 95/100 exit bar, and automated permanent memory rule distillation.",
-      "attached_code": "class LoopEngine:\n    async def run(self, goal: str, pass_bar: int = 95, max_iterations: int = 4):\n        # 1. Ingest standards (CLAUDE.md) & active memory (MEMORY.md)\n        # 2. Iterate: Strategist -> Writer -> Designer -> Independent Checker\n        # 3. Check exit condition: if score >= pass_bar: Exit\n        # 4. If score < pass_bar: Record deductions into MEMORY.md & Retry",
-      "createdAt": "2026-08-27T20:27:31.805Z",
-      "updatedAt": "2026-08-27T20:27:31.805Z"
-    }
-  ],
-  "ideas": [],
-  "changelog": [],
-  "builds": [],
-  "code": [
-    {
-      "id": 4,
-      "projectId": 3,
-      "title": "idea_labs_explorer.html (Source)",
-      "language": "python 3",
-      "notes": "Uploaded via AI Intake for ${newProject.name}",
+      "filename": "idea_labs_explorer.html",
       "code": "// unified card anatomy used sitewide (websites, scripts, summaries)\nfunction cardShell(title, badge, bodyHTML, footerHTML){\n  return `<div class=\"card\">\n    <div class=\"card-h\">${title}${badge||''}</div>\n    <div class=\"card-b\">${bodyHTML}</div>\n    <div class=\"card-f\">${footerHTML}</div>\n  </div>`;\n}\n// reverse index: image -> websites that appear in it\nconst img2sites = {};\nwebsites.forEach(w => w.src.forEach(s => {\n  (s.match(/IMG_\\d+/g)||[]).forEach(m =>\n    (img2sites[m] = img2sites[m] || []).push({label: w.name, url: w.url}));\n}));",
-      "createdAt": "2026-08-27T20:27:35.999Z"
-    },
-    {
-      "id": 2,
-      "projectId": 1,
-      "title": "loop_agent/core/loop_engine.py (Source)",
-      "language": "python",
-      "notes": "Uploaded via AI Intake for ${newProject.name}",
-      "code": "class LoopEngine:\n    async def run(self, goal: str, pass_bar: int = 95, max_iterations: int = 4):\n        # 1. Ingest standards (CLAUDE.md) & active memory (MEMORY.md)\n        # 2. Iterate: Strategist -> Writer -> Designer -> Independent Checker\n        # 3. Check exit condition: if score >= pass_bar: Exit\n        # 4. If score < pass_bar: Record deductions into MEMORY.md & Retry",
-      "createdAt": "2026-08-27T20:27:31.805Z"
+      "status": "pending",
+      "createdAt": "2026-08-27T20:18:06.639Z"
     }
-  ],
-  "dialogues": [],
-  "inbox": []
+  ]
 }

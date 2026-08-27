@@ -17,7 +17,7 @@ const HOST = "0.0.0.0";
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 
 // Security configuration (Set INTAKE_API_KEY in Render dashboard under Environment)
-const INTAKE_API_KEY = process.env.INTAKE_API_KEY || "";
+const INTAKE_API_KEY = process.env.INTAKE_API_KEY || "f67d832c80a1fe6bfdce41f3d3ea94bd";
 
 // Rate limiting: 60 requests per minute per IP
 const ipRateMap = new Map();

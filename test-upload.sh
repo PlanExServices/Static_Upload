@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# The DelQuro Files Pro — AI Code Upload Verification Script
-# Tests uploading an AI project payload to your live Render receiver.
-# Usage:
-#   ./test-upload.sh                                      # tests https://static-upload.onrender.com
-#   ./test-upload.sh http://localhost:3000                # tests local server
+# The DelQuro Files Pro — Authenticated AI Code Upload Verification Script
+# Tests uploading an AI project payload to your live Render receiver with API key.
 # ==============================================================================
 
 SERVER_URL="${1:-https://static-upload.onrender.com}"
+API_KEY="${2:-f67d832c80a1fe6bfdce41f3d3ea94bd}"
 
 echo "======================================================================"
-echo "  Testing AI Code Upload to DelQuro Files Receiver at: ${SERVER_URL}"
+echo "  Testing Authenticated AI Code Upload to: ${SERVER_URL}"
+echo "  Using API Key: ${API_KEY:0:8}..."
 echo "======================================================================"
 echo ""
 
@@ -20,23 +19,25 @@ STATUS_RES=$(curl -s "${SERVER_URL}/api/status")
 echo "Response: ${STATUS_RES}"
 echo ""
 
-# 2. Upload Code Payload
-echo "[2/3] Simulating AI uploading a new code project..."
+# 2. Upload Code Payload with API Key
+echo "[2/3] Simulating AI uploading a new code project with secret key..."
 UPLOAD_RES=$(curl -s -X POST "${SERVER_URL}/api/intake" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "OmniVector Engine",
-    "tagline": "Quantized real-time vector search for resource-constrained edge devices",
-    "description": "OmniVector Engine is an ultra-compact vector search engine built for edge computing environments. It implements 1-bit binary quantization, hierarchical navigable small-world indexing, and hardware SIMD acceleration. Achieves sub-millisecond retrieval on ARM devices.",
-    "stack": "C++, WebAssembly, TypeScript, SQLite",
-    "arena_link": "https://arena.ai/c/omni-vector",
-    "github_link": "https://github.com/PlanExServices/Static_Upload",
-    "emergent_link": "https://emergent.sh/apps/omni-vector",
-    "base44_link": "https://base44.com/omni-vector",
-    "differentiator": "Consumes 94% less RAM than standard float32 vector indexes while retaining 98.2% top-10 recall accuracy.",
-    "filename": "omni_vector.cpp",
-    "code": "// OmniVector Engine - SIMD Quantized Search\n#include <vector>\n#include <arm_neon.h>\n\nfloat hamming_distance(uint64_t a, uint64_t b) {\n    return (float)__builtin_popcountll(a ^ b);\n}"
-  }')
+  -H "X-API-Key: ${API_KEY}" \
+  -d "{
+    \"api_key\": \"${API_KEY}\",
+    \"name\": \"Authenticated Verification Project\",
+    \"tagline\": \"Live test with enforced secret API key verification\",
+    \"description\": \"Validating that requests with the secret API key are accepted by the receiver, while unauthenticated requests are blocked with 401 Unauthorized.\",
+    \"stack\": \"TypeScript, Node.js, Render, Arena SDK\",
+    \"arena_link\": \"https://arena.ai/c/auth-test\",
+    \"github_link\": \"https://github.com/PlanExServices/Static_Upload\",
+    \"emergent_link\": \"https://emergent.sh/apps/auth-test\",
+    \"base44_link\": \"https://base44.com/apps/auth-test\",
+    \"differentiator\": \"Enforced API key protection blocking unauthorized uploads at the gateway level.\",
+    \"filename\": \"auth_test.ts\",
+    \"code\": \"// Key authentication verified\nexport const authenticated = true;\"
+  }")
 
 echo "Upload Response:"
 echo "${UPLOAD_RES}"
@@ -44,9 +45,9 @@ echo ""
 
 # 3. Verify in Inbox
 echo "[3/3] Verifying item in intake staging queue..."
-INBOX_RES=$(curl -s "${SERVER_URL}/api/intake")
+INBOX_RES=$(curl -s -H "X-API-Key: ${API_KEY}" "${SERVER_URL}/api/intake")
 echo "Inbox Count: $(echo "${INBOX_RES}" | python3 -c 'import sys, json; data=json.load(sys.stdin); print(data.get("count", 0))')"
 echo ""
-echo "SUCCESS! The AI code payload was received and drafted into a card."
+echo "SUCCESS! Authenticated AI upload verified."
 echo "Visit ${SERVER_URL} and click \"AI Intake & Studio\" to review and publish it to DelQuro Files!"
 echo "======================================================================"

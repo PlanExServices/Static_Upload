@@ -691,5 +691,23 @@
       "id": 45
     }
   ],
-  "inbox": []
+  "inbox": [
+    {
+      "id": "inbox-1787863661776-421",
+      "name": "Key Test",
+      "tagline": "High-performance software architecture built for rapid execution.",
+      "description": "Streamlined implementation featuring modular components, robust state management, and optimized execution flow. Designed for scalable deployment with direct integration across modern cloud environments.",
+      "wordCount": 23,
+      "stack": "JavaScript, CSS, HTML",
+      "arena_link": "",
+      "github_link": "",
+      "emergent_link": "",
+      "base44_link": "",
+      "differentiator": "Zero runtime bloat with direct-to-metal execution and instant multi-platform deployment capability.",
+      "filename": "Key Test",
+      "code": "",
+      "status": "pending",
+      "createdAt": "2026-08-27T20:47:41.776Z"
+    }
+  ]
 }

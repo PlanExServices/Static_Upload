@@ -415,6 +415,15 @@ time { cursor: default; }
 .rc-online { color: var(--green); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .rc-offline { color: var(--amber); }
 
+
+/* Visual polish & layout stability */
+.preview-card-wrap { border: 1px dashed var(--cyan); border-radius: var(--radius); padding: 4px; background: rgba(56,204,255,0.02); }
+.preview-card-wrap .pc-actions { display: none !important; }
+.preview-card-wrap .project-card { cursor: default; }
+.code-box pre { word-break: break-word; white-space: pre-wrap; max-width: 100%; }
+.receiver-url code { word-break: break-all; max-width: 100%; display: inline-block; }
+.pc-links .link-btn { white-space: nowrap; }
+
 /* ===== The DelQuro Files Pro — Platform Links & AI Intake Styles ===== */
 .btn.link-btn.emergent { border-color: rgba(53,217,160,0.4); color: var(--green); background: rgba(53,217,160,0.08); }
 .btn.link-btn.emergent:hover { background: rgba(53,217,160,0.14); }
@@ -1027,13 +1036,7 @@ function analyzeCodeInBrowser(rawCode, filename = "") {
 
 
 function getIntakeEndpoint() {
-  const custom = localStorage.getItem("delquro_backend_url");
-  if (custom) return custom.replace(/\/+$/, "") + "/api/intake";
-  if (window.location.hostname.includes("onrender.com")) {
-    return window.location.origin + "/api/intake";
-  }
-  // Default to live Render endpoint
-  return "https://static-upload.onrender.com/api/intake";
+  return getActiveBackendBase() + "/api/intake";
 }
 
 function renderIntake() {
@@ -1211,7 +1214,7 @@ function renderIntake() {
                   <span>LIVE CARD PREVIEW</span>
                   <span class="preview-note">Reflects how it appears in DelQuro Files</span>
                 </div>
-                <div id="live-card-preview">
+                <div id="live-card-preview" class="preview-card-wrap">
                   ${projectCard({
                     id: 999,
                     name: draft.name || "Project Name",
@@ -1246,7 +1249,9 @@ function renderIntake() {
       <button class="btn primary" data-action="open-ai-prompt-modal">${icon("robot", 15)} Tell Your AI</button>
       <button class="btn ghost" data-action="quick-paste-code">${icon("plus", 15)} Paste / Drop Code</button>
       <button class="btn ghost" data-action="copy-curl">${icon("copy", 15)} Copy curl</button>
-      <button class="btn ghost" data-action="open-deploy-modal">${icon("external", 14)} 🚀 How to Publish</button>
+      <button class="btn ghost" data-action="open-api-key-modal" title="Manage API Secret Key">🔑 ${localStorage.getItem("delquro_api_key") ? "Key Saved" : "Set API Key"}</button>
+      <button class="btn ghost" data-action="send-test-upload" title="Send a real test AI upload to verify connection">${icon("zap", 13)} Test AI Upload</button>
+      <button class="btn ghost" data-action="open-deploy-modal">${icon("external", 14)} 🚀 Publish</button>
     `)}
 
     <div class="receiver-banner">
@@ -1256,6 +1261,9 @@ function renderIntake() {
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="receiver-status">RECEIVER ACTIVE · WAITING FOR AI CODE</span>
             <span class="badge st-active" style="font-size:10px; padding:1px 6px;">Live Cloud Webhook</span>
+            ${localStorage.getItem("delquro_api_key") ?
+              `<span class="badge st-active" style="font-size:10px; padding:1px 6px; cursor:pointer;" data-action="open-api-key-modal" title="API Key is saved in this browser">🔒 Key Protected</span>` :
+              `<span class="badge st-planned" style="font-size:10px; padding:1px 6px; cursor:pointer;" data-action="open-api-key-modal" title="Click to set an API Key">🔓 Open Mode</span>`}
           </div>
           <span class="receiver-url" style="display:flex; align-items:center; gap:6px; margin-top:2px;">
             Listening at <code class="mono" style="font-weight:600; color:var(--cyan);">${esc(getIntakeEndpoint())}</code>
@@ -1432,12 +1440,14 @@ function projectCard(p) {
 
     ${stack.length ? `<div class="chips">${stack.map(s => `<span class="chip mono">${esc(s)}</span>`).join("")}</div>` : ""}
 
-    <div class="pc-links">
-      ${linkBtn("arena", p.arena_link, "Arena.ai", "arena", p.id)}
-      ${linkBtn("github", p.github_link, "GitHub", "github", p.id)}
-      ${linkBtn("emergent", p.emergent_link, "Emergent.sh", "emergent", p.id)}
-      ${linkBtn("base44", p.base44_link, "Base44.com", "base44", p.id)}
-    </div>
+    ${(() => {
+      const active = [];
+      if (p.arena_link) active.push(linkBtn("arena", p.arena_link, "Arena.ai", "arena", p.id));
+      if (p.github_link) active.push(linkBtn("github", p.github_link, "GitHub", "github", p.id));
+      if (p.emergent_link) active.push(linkBtn("emergent", p.emergent_link, "Emergent.sh", "emergent", p.id));
+      if (p.base44_link) active.push(linkBtn("base44", p.base44_link, "Base44.com", "base44", p.id));
+      return active.length ? `<div class="pc-links">${active.join("")}</div>` : "";
+    })()}
 
     <div class="pc-counts">
       ${countPill("idea", c.ideas)} ${countPill("changelog", c.changelog)} ${countPill("build", c.builds)} ${countPill("code", c.code)} ${countPill("dialogue", c.dialogues)}
@@ -1783,6 +1793,169 @@ function dialogueForm(existing, pid) {
 
 /* ============================ actions ============================ */
 const actions = {
+  "send-test-upload": async () => {
+    toast("Sending test AI upload to receiver...");
+    const endpoint = getIntakeEndpoint();
+    const apiKey = localStorage.getItem("delquro_api_key") || "";
+    const headers = { "Content-Type": "application/json" };
+    if (apiKey) headers["X-API-Key"] = apiKey;
+
+    const sample = {
+      api_key: apiKey,
+      name: "AI Test Project " + Math.floor(Math.random() * 900 + 100),
+      tagline: "Live verification test for DelQuro Files receiver",
+      description: "Successfully uploaded to your live receiver. This project demonstrates automated 120-word card synthesis, stack extraction, and multi-platform URL linking across Arena, GitHub, Emergent, and Base44.",
+      stack: "TypeScript, React, FastAPI, Arena SDK",
+      arena_link: "https://arena.ai/c/test-project",
+      github_link: "https://github.com/PlanExServices/Static_Upload",
+      emergent_link: "https://emergent.sh/apps/test-project",
+      base44_link: "https://base44.com/apps/test-project",
+      differentiator: "Sub-second webhook intake with zero-dependency architecture and automatic card generation.",
+      code: "// Auto-generated test code\nconsole.log('Receiver verified!');"
+    };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(sample)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast("Test upload received! It appeared in your queue below ⚡");
+        await triggerBackendSync();
+        render();
+      } else {
+        toast("Upload error: " + (data.message || "Request failed"), "error");
+      }
+    } catch (err) {
+      toast("Could not reach receiver at " + endpoint + ": " + err.message, "error");
+    }
+  },
+
+  "open-api-key-modal": () => {
+    const savedKey = localStorage.getItem("delquro_api_key") || "";
+    const intakeUrl = getIntakeEndpoint();
+
+    openModal(`
+      <div class="modal-head">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${icon("robot", 20)}
+          <h3 style="margin:0;">🔑 Manage API Key &amp; Security</h3>
+        </div>
+        <button class="icon-btn modal-close">✕</button>
+      </div>
+
+      <p style="font-size:13px; color:var(--muted); margin-top:0;">
+        Save your API secret key in this browser. When configured, DelQuro Files automatically authenticates your sync calls and provides the key to your AI assistants.
+      </p>
+
+      <label class="field">
+        <div class="field-label-row">
+          <span class="field-label">API Secret Key</span>
+          <button type="button" class="btn ghost sm mini" id="gen-key-btn">${icon("zap", 12)} Generate Random</button>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="app-api-key" value="${esc(savedKey)}" placeholder="Enter or paste your secret key (e.g. sk_live_...)" style="flex:1; font-family:var(--mono);">
+          <button type="button" class="btn ghost sm" id="copy-key-input-btn" title="Copy key">${icon("copy", 14)}</button>
+        </div>
+      </label>
+
+      <div style="margin:10px 0; display:flex; gap:8px; align-items:center;">
+        <button type="button" class="btn ghost sm" id="test-key-btn">${icon("dashboard", 13)} Test Key Against Server</button>
+        <span id="key-test-status" style="font-size:12px; font-family:var(--mono); color:var(--muted);"></span>
+      </div>
+
+      <div style="background:var(--bg); border:1px solid var(--border2); border-radius:10px; padding:12px; margin:14px 0; font-size:12.5px; line-height:1.5;">
+        <div style="font-weight:700; color:var(--amber); margin-bottom:4px;">💡 Where to Set the Key:</div>
+        <div style="color:var(--text); margin-bottom:8px;">
+          • <strong>In Render Dashboard:</strong> Go to your service > <strong>Environment</strong> > Add <code>INTAKE_API_KEY</code> with this same value.
+        </div>
+        <div style="font-weight:700; color:var(--cyan); margin-bottom:4px;">🤖 How the AI Uploads the Key:</div>
+        <div style="color:var(--muted);">
+          1. <strong>In JSON Payload:</strong> <code>{ "api_key": "YOUR_KEY", "name": "..." }</code><br>
+          2. <strong>In HTTP Header:</strong> <code>X-API-Key: YOUR_KEY</code><br>
+          3. <strong>In URL:</strong> <code>${intakeUrl}?token=YOUR_KEY</code>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn ghost modal-close">Cancel</button>
+        ${savedKey ? '<button class="btn ghost sm danger" id="clear-key-btn">Clear Key</button>' : ''}
+        <button class="btn primary" id="save-app-key-btn">💾 Save Key to Browser</button>
+      </div>
+    `);
+
+    // Generate random key
+    $("#gen-key-btn").onclick = () => {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let res = "sk_dq_";
+      for (let i = 0; i < 24; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+      $("#app-api-key").value = res;
+      toast("Random 24-character key generated!");
+    };
+
+    // Copy key
+    $("#copy-key-input-btn").onclick = () => {
+      const val = $("#app-api-key").value.trim();
+      if (!val) return;
+      copyText(val);
+      toast("API Key copied to clipboard ✓");
+    };
+
+    // Test key against server
+    $("#test-key-btn").onclick = async () => {
+      const keyVal = $("#app-api-key").value.trim();
+      const statusEl = $("#key-test-status");
+      statusEl.textContent = "Testing...";
+      statusEl.style.color = "var(--muted)";
+      try {
+        const verifyEndpoint = getIntakeEndpoint().replace(/\/api\/intake.*$/, "/api/verify-key");
+        const res = await fetch(verifyEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Key": keyVal },
+          body: JSON.stringify({ api_key: keyVal })
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          statusEl.textContent = data.authEnabled ? "✅ Key Verified by Server!" : "ℹ️ Server in Open Mode (Key Accepted)";
+          statusEl.style.color = "var(--green)";
+        } else {
+          statusEl.textContent = "❌ " + (data.message || "Key rejected by server");
+          statusEl.style.color = "var(--red)";
+        }
+      } catch (err) {
+        statusEl.textContent = "⚠️ Could not reach server";
+        statusEl.style.color = "var(--amber)";
+      }
+    };
+
+    // Save key
+    $("#save-app-key-btn").onclick = () => {
+      const keyVal = $("#app-api-key").value.trim();
+      if (keyVal) {
+        localStorage.setItem("delquro_api_key", keyVal);
+        toast("API Key saved in browser! 🔒");
+      } else {
+        localStorage.removeItem("delquro_api_key");
+        toast("API Key cleared (Open mode)");
+      }
+      closeModal();
+      render();
+    };
+
+    // Clear key
+    const clearBtn = $("#clear-key-btn");
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        localStorage.removeItem("delquro_api_key");
+        toast("API Key cleared from browser");
+        closeModal();
+        render();
+      };
+    }
+  },
+
   "copy-intake-endpoint": () => {
     copyText(getIntakeEndpoint());
     toast("Intake URL copied: " + getIntakeEndpoint() + " ✓");
@@ -1801,8 +1974,12 @@ const actions = {
         <span class="field-label">Live Webhook Domain / API URL (e.g. Render)</span>
         <input type="url" id="rw-backend-input" value="${esc(current)}" placeholder="https://static-upload.onrender.com">
       </label>
+      <label class="field">
+        <span class="field-label">API Secret Key (optional)</span>
+        <input type="password" id="rw-key-input" value="${esc(localStorage.getItem("delquro_api_key") || "")}" placeholder="Enter INTAKE_API_KEY if configured in Render env">
+      </label>
       <div style="font-size:12px; color:var(--faint); margin-bottom:12px;">
-        💡 On Render: <strong>New + > Web Service</strong> > Select <code>PlanExServices/Static_Upload</code> > Start command: <code>node server.js</code> > Free tier.
+        🔒 <strong>Security Note:</strong> If you set <code>INTAKE_API_KEY</code> on Render, only requests with this key will be accepted.
       </div>
       <div class="modal-actions">
         <button class="btn ghost modal-close">Cancel</button>
@@ -1815,8 +1992,13 @@ const actions = {
       let val = ($("#rw-backend-input").value || "").trim().replace(/\/+$/, "");
       if (val && !val.startsWith("http")) val = "https://" + val;
       localStorage.setItem("delquro_backend_url", val);
+
+      const apiKey = ($("#rw-key-input") ? $("#rw-key-input").value : "").trim();
+      if (apiKey) localStorage.setItem("delquro_api_key", apiKey);
+      else localStorage.removeItem("delquro_api_key");
+
       closeModal();
-      toast("Railway backend URL saved! Syncing... ✓");
+      toast("Backend settings saved! Syncing... ✓");
       await triggerBackendSync();
       render();
     };
@@ -1881,6 +2063,9 @@ const actions = {
 
     "open-ai-prompt-modal": () => {
     const intakeUrl = getIntakeEndpoint();
+    const apiKey = localStorage.getItem("delquro_api_key") || "";
+    const authHeaderNote = apiKey ? `\n  -H "X-API-Key: ${apiKey}"` : '';
+    const authJsonNote = apiKey ? `\n  "api_key": "${apiKey}",` : '';
     const siteUrl = window.location.origin.includes("github.io") ? "https://planexservices.github.io/Static_Upload/" : window.location.origin + "/";
 
     const promptText = `You are an AI assistant helping me build and track software in "The DelQuro Files".
@@ -1890,7 +2075,7 @@ Whenever you write code, propose an idea, or finish a feature for me:
    ${intakeUrl}
 
 JSON Payload Format:
-{
+{${apiKey ? `\n  "api_key": "${apiKey}",` : ''}
   "name": "<Project Name>",
   "tagline": "<Punchy one-sentence summary>",
   "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
@@ -1904,7 +2089,7 @@ JSON Payload Format:
   "code": "<source code snippet or key implementation>"
 }`;
 
-    const curlCmd = `curl -X POST ${intakeUrl} \\
+    const curlCmd = `curl -X POST ${intakeUrl} ${authHeaderNote} \\
   -H "Content-Type: application/json" \\
   -d @- << 'EOF'
 {
@@ -2441,6 +2626,9 @@ function openCaptureSheet() {
 
 function openMenuSheet() {
   const sections = [
+    { id: "intake", label: "AI Intake & Studio", icon: "intake" },
+    { id: "projects", label: "Projects", icon: "project" },
+    { id: "ideas", label: "Ideas", icon: "idea" },
     { id: "changelog", label: "Change Log", icon: "changelog" },
     { id: "builds", label: "Builds", icon: "build" },
     { id: "code", label: "Code", icon: "code" },
@@ -2774,11 +2962,23 @@ syncGitHubIssuesIntake();
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous">
 // Background receiver polling: check for new AI code uploads every 4 seconds
+function getActiveBackendBase() {
+  const custom = localStorage.getItem("delquro_backend_url");
+  if (custom) return custom.replace(/\/+$/, "");
+  if (window.location.hostname.includes("onrender.com")) return window.location.origin;
+  if (window.location.hostname.includes("github.io")) return "https://static-upload.onrender.com";
+  if (window.location.protocol.startsWith("http")) return window.location.origin;
+  return "https://static-upload.onrender.com";
+}
+
 async function triggerBackendSync() {
-  const customURL = localStorage.getItem("delquro_backend_url") || "";
-  const endpoint = customURL ? customURL + "/api/intake" : "/api/intake";
+  const base = getActiveBackendBase();
+  const endpoint = base + "/api/intake";
   try {
-    const res = await fetch(endpoint, { mode: "cors" });
+    const headers = {};
+    const key = localStorage.getItem("delquro_api_key");
+    if (key) headers["X-API-Key"] = key;
+    const res = await fetch(endpoint, { headers, mode: "cors" });
     if (res.ok) {
       const data = await res.json();
       if (data.items && Array.isArray(data.items)) {

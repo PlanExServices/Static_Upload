@@ -15,6 +15,44 @@ const HOST = "0.0.0.0";
 
 // Support custom persistent volume if configured in Railway (e.g. DATA_DIR=/data)
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
+
+// Security configuration (Set INTAKE_API_KEY in Render dashboard under Environment)
+const INTAKE_API_KEY = process.env.INTAKE_API_KEY || "";
+
+// Rate limiting: 60 requests per minute per IP
+const ipRateMap = new Map();
+function checkRateLimit(ip, limit = 60, windowMs = 60000) {
+  const now = Date.now();
+  const record = ipRateMap.get(ip) || { count: 0, reset: now + windowMs };
+  if (now > record.reset) {
+    record.count = 0;
+    record.reset = now + windowMs;
+  }
+  record.count++;
+  ipRateMap.set(ip, record);
+  return record.count <= limit;
+}
+
+function isAuthorized(req, parsedUrl, bodyPayload = null) {
+  if (!INTAKE_API_KEY) return true; // Open mode if no key configured in env
+  const headerKey = req.headers["x-api-key"] || "";
+  const authHeader = req.headers["authorization"] || "";
+  const bearerToken = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+  const queryToken = parsedUrl.searchParams.get("token") || parsedUrl.searchParams.get("key") || parsedUrl.searchParams.get("api_key") || "";
+
+  let bodyKey = "";
+  if (bodyPayload && typeof bodyPayload === "object") {
+    bodyKey = bodyPayload.api_key || bodyPayload.apiKey || bodyPayload.key || bodyPayload.token || "";
+  }
+
+  return (
+    headerKey === INTAKE_API_KEY ||
+    bearerToken === INTAKE_API_KEY ||
+    queryToken === INTAKE_API_KEY ||
+    bodyKey === INTAKE_API_KEY
+  );
+}
+
 const DB_FILE = path.join(DATA_DIR, "delquro-db.json");
 const INBOX_FILE = path.join(DATA_DIR, "inbox.json");
 
@@ -196,9 +234,9 @@ function readBody(req) {
     let data = "";
     req.on("data", chunk => {
       data += chunk;
-      if (data.length > 25 * 1024 * 1024) { // 25MB limit
+      if (data.length > 5 * 1024 * 1024) { // 25MB limit
         req.destroy();
-        reject(new Error("Payload too large (max 25MB)"));
+        reject(new Error("Payload too large (max 5MB)"));
       }
     });
     req.on("end", () => resolve(data));
@@ -220,6 +258,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+
+  const clientIP = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+  if (!checkRateLimit(clientIP)) {
+    res.writeHead(429, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Too Many Requests", message: "Rate limit exceeded. Please wait a minute." }));
+    return;
+  }
   const pathname = parsedUrl.pathname;
 
   // JSON helper
@@ -229,6 +274,30 @@ const server = http.createServer(async (req, res) => {
   };
 
   try {
+        // ----------------------------------------------------
+    // API: POST /api/verify-key — Verify API key from app
+    // ----------------------------------------------------
+    if (pathname === "/api/verify-key" && req.method === "POST") {
+      const rawBody = await readBody(req);
+      let payload = {};
+      try { payload = JSON.parse(rawBody); } catch (e) {}
+
+      if (!INTAKE_API_KEY) {
+        return sendJSON(200, {
+          valid: true,
+          authEnabled: false,
+          message: "Server is in open mode (no INTAKE_API_KEY set on server). All uploads accepted."
+        });
+      }
+
+      const valid = isAuthorized(req, parsedUrl, payload);
+      return sendJSON(valid ? 200 : 401, {
+        valid,
+        authEnabled: true,
+        message: valid ? "API key is valid and verified by server! ✓" : "Invalid API key. Check INTAKE_API_KEY in Render."
+      });
+    }
+
     // ----------------------------------------------------
     // API: System Status & Railway Healthcheck
     // ----------------------------------------------------
@@ -259,32 +328,66 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ----------------------------------------------------
-    // API: POST /api/intake — AI uploads code
+    // API: POST /api/intake — AI uploads code (supports api_key in JSON body)
     // ----------------------------------------------------
     if (pathname === "/api/intake" && req.method === "POST") {
       const rawBody = await readBody(req);
       let payload = {};
 
+      // 1. Clean rawBody: strip markdown code blocks like ```json ... ``` or ``` ... ```
+      let cleaned = (rawBody || "").trim();
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+
       try {
-        payload = JSON.parse(rawBody);
+        payload = JSON.parse(cleaned);
       } catch (e) {
-        payload = { code: rawBody, filename: "uploaded_code.txt" };
+        // Try searching for JSON inside text
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try { payload = JSON.parse(jsonMatch[0]); } catch (e2) { payload = { code: cleaned }; }
+        } else {
+          payload = { code: cleaned, filename: "uploaded_code.txt" };
+        }
       }
 
-      const rawCode = payload.code || payload.content || rawBody;
-      const filename = payload.filename || payload.file || "snippet.txt";
+      // Check authorization: header, query param, or JSON body "api_key"
+      if (!isAuthorized(req, parsedUrl, payload)) {
+        return sendJSON(401, {
+          success: false,
+          error: "Unauthorized",
+          message: "Valid API key required. Pass 'api_key' in JSON payload, 'X-API-Key' header, 'Authorization: Bearer <key>', or '?token=<key>'."
+        });
+      }
 
+      // 2. Extract code & filename flexibly
+      let rawCode = payload.code || payload.content || payload.source || payload.source_code || payload.script || "";
+      let filename = payload.filename || payload.file || payload.name || "snippet.txt";
+
+      // If AI passed multi-file array: {"files": [{"path": "...", "content": "..."}]}
+      if (!rawCode && Array.isArray(payload.files) && payload.files.length) {
+        rawCode = payload.files.map(f => {
+          if (typeof f === "string") return f;
+          return `// File: ${f.path || f.name || "file"}\n${f.content || f.code || ""}`;
+        }).join("\n\n// ==========================================\n\n");
+        filename = (payload.files[0].path || payload.files[0].name || "project_bundle.txt");
+      }
+      if (!rawCode && !payload.name && !payload.title) {
+        rawCode = cleaned;
+      }
+
+      // 3. Analyze code heuristics for missing fields
       const analyzed = analyzeCode(rawCode, filename);
 
-      const finalName = (payload.name || payload.title || analyzed.name).trim();
-      const finalTagline = (payload.tagline || payload.summary || analyzed.tagline).trim();
-      let finalDesc = (payload.description || payload.desc || analyzed.description).trim();
-      const finalStack = (payload.stack || analyzed.stack).trim();
-      const finalArena = (payload.arena_link || payload.arena_url || analyzed.arena_link).trim();
-      const finalGithub = (payload.github_link || payload.github_url || analyzed.github_link).trim();
-      const finalEmergent = (payload.emergent_link || payload.emergent_url || analyzed.emergent_link).trim();
-      const finalBase44 = (payload.base44_link || payload.base44_url || analyzed.base44_link).trim();
-      const finalDiff = (payload.differentiator || payload.edge || payload.sets_apart || analyzed.differentiator).trim();
+      // 4. Resolve all field aliases gracefully
+      const finalName = (payload.name || payload.title || payload.project_name || payload.projectName || analyzed.name).trim();
+      const finalTagline = (payload.tagline || payload.summary || payload.hook || payload.one_liner || analyzed.tagline).trim();
+      let finalDesc = (payload.description || payload.desc || payload.about || payload.overview || analyzed.description).trim();
+      const finalStack = (payload.stack || payload.tech_stack || payload.technologies || payload.tools || analyzed.stack).trim();
+      const finalArena = (payload.arena_link || payload.arena_url || payload.arena || analyzed.arena_link).trim();
+      const finalGithub = (payload.github_link || payload.github_url || payload.github || payload.repo || payload.repository || analyzed.github_link).trim();
+      const finalEmergent = (payload.emergent_link || payload.emergent_url || payload.emergent || analyzed.emergent_link).trim();
+      const finalBase44 = (payload.base44_link || payload.base44_url || payload.base44 || analyzed.base44_link).trim();
+      const finalDiff = (payload.differentiator || payload.edge || payload.moat || payload.why || payload.sets_apart || analyzed.differentiator).trim();
 
       // Enforce 120-word maximum limit on description
       const words = finalDesc.split(/\s+/).filter(Boolean);

@@ -682,7 +682,12 @@ time { cursor: default; }
 /* ============================ helpers ============================ */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function esc(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&amp;/g, "&")
+    .replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 const cap = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 const opts = arr => arr.map(x => ({ v: x, l: cap(x) }));
 
@@ -1035,9 +1040,43 @@ function analyzeCodeInBrowser(rawCode, filename = "") {
 }
 
 
+
+function getActiveBackendBase() {
+  const custom = localStorage.getItem("delquro_backend_url");
+  if (custom) return custom.replace(/\/+$/, "");
+  if (window.location.hostname.includes("onrender.com")) return window.location.origin;
+  if (window.location.hostname.includes("github.io")) return "https://static-upload.onrender.com";
+  if (window.location.protocol.startsWith("http")) return window.location.origin;
+  return "https://static-upload.onrender.com";
+}
+
 function getIntakeEndpoint() {
   return getActiveBackendBase() + "/api/intake";
 }
+
+async function triggerBackendSync() {
+  const base = getActiveBackendBase();
+  const endpoint = base + "/api/intake";
+  try {
+    const headers = {};
+    const key = localStorage.getItem("delquro_api_key");
+    if (key) headers["X-API-Key"] = key;
+    const res = await fetch(endpoint, { headers, mode: "cors" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items && Array.isArray(data.items)) {
+        const prevCount = (db.inbox || []).length;
+        if (JSON.stringify(db.inbox) !== JSON.stringify(data.items)) {
+          db.inbox = data.items;
+          persist();
+          if (state.view === "intake" || state.view === "dashboard") render();
+          if (data.items.length > prevCount) toast("New code upload received from AI! ⚡");
+        }
+      }
+    }
+  } catch (e) {}
+}
+
 
 function renderIntake() {
   const inbox = db.inbox || [];
@@ -1245,7 +1284,7 @@ function renderIntake() {
   }
 
   return `
-    ${pageHead("AI Intake &amp; Card Studio", "Tell any AI assistant to upload code to your receiver, define 120-word cards, and push to DelQuro Files.", `
+    ${pageHead("AI Intake & Card Studio", "Tell any AI assistant to upload code to your receiver, define 120-word cards, and push to DelQuro Files.", `
       <button class="btn primary" data-action="open-ai-prompt-modal">${icon("robot", 15)} Tell Your AI</button>
       <button class="btn ghost" data-action="quick-paste-code">${icon("plus", 15)} Paste / Drop Code</button>
       <button class="btn ghost" data-action="copy-curl">${icon("copy", 15)} Copy curl</button>
@@ -2959,68 +2998,11 @@ render();
 syncWithServerOnBoot();
 checkURLForIntakePayload();
 syncGitHubIssuesIntake();
-</script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous">
+
 // Background receiver polling: check for new AI code uploads every 4 seconds
-function getActiveBackendBase() {
-  const custom = localStorage.getItem("delquro_backend_url");
-  if (custom) return custom.replace(/\/+$/, "");
-  if (window.location.hostname.includes("onrender.com")) return window.location.origin;
-  if (window.location.hostname.includes("github.io")) return "https://static-upload.onrender.com";
-  if (window.location.protocol.startsWith("http")) return window.location.origin;
-  return "https://static-upload.onrender.com";
-}
-
-async function triggerBackendSync() {
-  const base = getActiveBackendBase();
-  const endpoint = base + "/api/intake";
-  try {
-    const headers = {};
-    const key = localStorage.getItem("delquro_api_key");
-    if (key) headers["X-API-Key"] = key;
-    const res = await fetch(endpoint, { headers, mode: "cors" });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.items && Array.isArray(data.items)) {
-        const prevCount = (db.inbox || []).length;
-        if (JSON.stringify(db.inbox) !== JSON.stringify(data.items)) {
-          db.inbox = data.items;
-          persist();
-          if (state.view === "intake" || state.view === "dashboard") render();
-          if (data.items.length > prevCount) toast("New code upload received from AI! ⚡");
-        }
-      }
-    }
-  } catch (e) {}
-}
-
 if (window.location.protocol.startsWith("http")) {
   setInterval(triggerBackendSync, 4000);
 }
-if (false) {
-  setInterval(async () => {
-    try {
-      const res = await fetch("/api/intake");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.items && Array.isArray(data.items)) {
-          const prevCount = (db.inbox || []).length;
-          if (JSON.stringify(db.inbox) !== JSON.stringify(data.items)) {
-            db.inbox = data.items;
-            persist();
-            if (state.view === "intake" || state.view === "dashboard") {
-              render();
-            }
-            if (data.items.length > prevCount) {
-              toast("New code upload received from AI! ⚡");
-            }
-          }
-        }
-      }
-    } catch (e) {}
-  }, 4000);
-}
-
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a31d76aa2aeb051c',t:'MTc4Nzg1ODc0MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

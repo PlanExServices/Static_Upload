@@ -1,0 +1,17 @@
+{
+  "name": "delquro-files-pro",
+  "version": "1.0.0",
+  "description": "The DelQuro Files Pro — AI Code Receiver & Project Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "bash test-upload.sh"
+  },
+  "keywords": ["ai", "project-tracker", "delquro", "code-intake"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -803,7 +803,7 @@ function deleteRow(kind, id) { db[kind] = db[kind].filter(x => x.id !== id); per
 
 let cloudPushTimer = null;
 async function pushToCloudStorage() {
-  const apiKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+  const apiKey = localStorage.getItem("delquro_api_key") || "";
   const renderSync = "https://static-upload.onrender.com/api/sync";
 
   // 1. Sync to Render Cloud Server
@@ -2373,7 +2373,7 @@ const actions = {
   },
 
     "open-ai-prompt-modal": () => {
-    let currentKey = localStorage.getItem("delquro_api_key") || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+    let currentKey = localStorage.getItem("delquro_api_key") || "";
     const intakeUrl = "https://static-upload.onrender.com/api/intake";
     const siteUrl = "https://planexservices.github.io/Static_Upload/";
 
@@ -2520,7 +2520,7 @@ Example output link from AI:
 
     // Live update when key changes
     keyInput.oninput = () => {
-      currentKey = keyInput.value.trim() || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+      currentKey = keyInput.value.trim() || "";
       localStorage.setItem("delquro_api_key", currentKey);
       badgeEl.textContent = "○ Key Updated";
       badgeEl.style.color = "var(--amber)";

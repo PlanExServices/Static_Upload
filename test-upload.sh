@@ -5,7 +5,7 @@
 # ==============================================================================
 
 SERVER_URL="${1:-https://static-upload.onrender.com}"
-API_KEY="${2:-f67d832c80a1fe6bfdce41f3d3ea94bd}"
+API_KEY="${2:-$INTAKE_API_KEY}"
 
 echo "======================================================================"
 echo "  Testing Authenticated AI Code Upload to: ${SERVER_URL}"

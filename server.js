@@ -17,7 +17,7 @@ const HOST = "0.0.0.0";
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 
 // Security configuration (Set INTAKE_API_KEY in Render dashboard under Environment)
-const INTAKE_API_KEY = process.env.INTAKE_API_KEY || "f67d832c80a1fe6bfdce41f3d3ea94bd";
+const INTAKE_API_KEY = (process.env.INTAKE_API_KEY || "").trim();
 
 // GitHub Cloud Storage Configuration (Option A)
 const GITHUB_REPO = process.env.GITHUB_REPO || "PlanExServices/Static_Upload";
@@ -111,7 +111,10 @@ function checkRateLimit(ip, limit = 60, windowMs = 60000) {
 }
 
 function isAuthorized(req, parsedUrl, bodyPayload = null) {
-  if (!INTAKE_API_KEY) return true; // Open mode if no key configured in env
+  if (!INTAKE_API_KEY) {
+    // Locked down: reject until user configures INTAKE_API_KEY in Render environment
+    return false;
+  }
   const expected = (INTAKE_API_KEY || "").trim();
   const headerKey = (req.headers["x-api-key"] || "").trim();
   const authHeader = (req.headers["authorization"] || "").trim();

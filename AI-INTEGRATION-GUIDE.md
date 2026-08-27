@@ -22,7 +22,7 @@ To prevent your secret key from ever being exposed in public chat prompts, your 
 - On Render, the server enforces your secret key (`INTAKE_API_KEY`).
 - On your computer or local shell, you store the key once in your environment:
   ```bash
-  export INTAKE_API_KEY="f67d832c80a1fe6bfdce41f3d3ea94bd"
+  export INTAKE_API_KEY="[YOUR_PRIVATE_API_KEY]"
   ```
   *(Add this line to your `~/.bashrc` or `~/.zshrc` so it is always available).*
 - In chat prompts and curl scripts, you and the AI reference **`$INTAKE_API_KEY`**.

@@ -1,0 +1,16 @@
+{
+  "id": 1,
+  "name": "Production Flow Engine",
+  "tagline": "Real-time autonomous build pipeline for AI-generated projects",
+  "description": "Production Flow Engine connects developer prompt streams to cloud deployment targets. It features instant card generation, automated word count validation under 120 words, multi-platform URL linking across Arena, GitHub, Emergent, and Base44, and human-in-the-loop review.",
+  "status": "active",
+  "stack": "Node.js, TypeScript, Render, GitHub API",
+  "arena_link": "https://arena.ai/",
+  "github_link": "https://github.com/PlanExServices/Static_Upload",
+  "emergent_link": "https://emergent.sh/",
+  "base44_link": "https://base44.com/",
+  "differentiator": "Direct integration between AI assistants and personal build tracking with zero external database dependencies.",
+  "attached_code": "// Production Flow Engine Active\nconsole.log(\"Card dispatched to Render successfully!\");",
+  "createdAt": "2026-08-27T20:16:57.054Z",
+  "updatedAt": "2026-08-27T20:16:57.054Z"
+}

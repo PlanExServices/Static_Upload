@@ -19,6 +19,83 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 // Security configuration (Set INTAKE_API_KEY in Render dashboard under Environment)
 const INTAKE_API_KEY = process.env.INTAKE_API_KEY || "f67d832c80a1fe6bfdce41f3d3ea94bd";
 
+// GitHub Cloud Storage Configuration (Option A)
+const GITHUB_REPO = process.env.GITHUB_REPO || "PlanExServices/Static_Upload";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "main";
+
+function slugify(str) {
+  return (str || "project")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+async function commitFileToGitHub(filePath, contentString, commitMessage) {
+  if (!GITHUB_TOKEN) return false;
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+    let existingSha = null;
+    try {
+      const getRes = await fetch(url + `?ref=${GITHUB_BRANCH}`, {
+        headers: {
+          "Authorization": `Bearer ${GITHUB_TOKEN}`,
+          "Accept": "application/vnd.github.v3+json",
+          "User-Agent": "DelQuro-Files"
+        }
+      });
+      if (getRes.ok) {
+        const fileData = await getRes.json();
+        existingSha = fileData.sha;
+      }
+    } catch (e) {}
+
+    const base64Content = Buffer.from(contentString, "utf8").toString("base64");
+    const payload = {
+      message: commitMessage || `Update ${filePath} via DelQuro Files Pro`,
+      content: base64Content,
+      branch: GITHUB_BRANCH
+    };
+    if (existingSha) payload.sha = existingSha;
+
+    const putRes = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "User-Agent": "DelQuro-Files"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    return putRes.ok;
+  } catch (err) {
+    console.error("[GitHub Cloud Sync] Error:", err.message);
+    return false;
+  }
+}
+
+async function syncProjectToGitHub(project, db) {
+  if (!GITHUB_TOKEN) return;
+  const slug = slugify(project.name);
+  try {
+    // 1. Commit main database file
+    await commitFileToGitHub("data/delquro-db.json", JSON.stringify(db, null, 2), `Cloud Sync: add ${project.name}`);
+    // 2. Commit project card JSON
+    await commitFileToGitHub(`projects/${slug}.json`, JSON.stringify(project, null, 2), `Cloud Card: ${project.name}`);
+    // 3. Commit attached source code file
+    if (project.attached_code) {
+      const ext = (project.filename && project.filename.includes(".")) ? project.filename.split(".").pop() : "txt";
+      const codeFilename = project.filename || `source.${ext}`;
+      await commitFileToGitHub(`code/${slug}/${codeFilename}`, project.attached_code, `Cloud Code: ${project.name}`);
+    }
+  } catch (e) {
+    console.error("[GitHub Cloud Sync] Error syncing project to repo:", e);
+  }
+}
+
+
 // Rate limiting: 60 requests per minute per IP
 const ipRateMap = new Map();
 function checkRateLimit(ip, limit = 60, windowMs = 60000) {
@@ -274,7 +351,34 @@ const server = http.createServer(async (req, res) => {
   };
 
   try {
-        // ----------------------------------------------------
+            // ----------------------------------------------------
+    // API: GET /api/github/status — GitHub Cloud Sync Status
+    // ----------------------------------------------------
+    if (pathname === "/api/github/status" && req.method === "GET") {
+      return sendJSON(200, {
+        enabled: Boolean(GITHUB_TOKEN),
+        repository: GITHUB_REPO,
+        branch: GITHUB_BRANCH,
+        message: GITHUB_TOKEN ? "GitHub Cloud Storage is active. All projects commit directly to " + GITHUB_REPO : "GitHub token not set. Set GITHUB_TOKEN in Render environment to enable automatic repo commits."
+      });
+    }
+
+    // ----------------------------------------------------
+    // API: POST /api/github/sync — Push all data to GitHub
+    // ----------------------------------------------------
+    if (pathname === "/api/github/sync" && req.method === "POST") {
+      const db = getDB();
+      if (!GITHUB_TOKEN) {
+        return sendJSON(400, { success: false, error: "GITHUB_TOKEN is not configured on server." });
+      }
+      const success = await commitFileToGitHub("data/delquro-db.json", JSON.stringify(db, null, 2), "Manual Cloud Backup from DelQuro Files Pro");
+      return sendJSON(success ? 200 : 500, {
+        success,
+        message: success ? "All projects and logs committed to " + GITHUB_REPO : "Failed to commit to GitHub. Check token permissions."
+      });
+    }
+
+    // ----------------------------------------------------
     // API: POST /api/verify-key — Verify API key from app
     // ----------------------------------------------------
     if (pathname === "/api/verify-key" && req.method === "POST") {
@@ -496,6 +600,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       saveJSON(DB_FILE, db);
+      syncProjectToGitHub(newProject, db);
 
       return sendJSON(201, {
         success: true,
@@ -556,6 +661,7 @@ const server = http.createServer(async (req, res) => {
 
       db.projects.unshift(created);
       saveJSON(DB_FILE, db);
+      syncProjectToGitHub(created, db);
       return sendJSON(201, { success: true, project: created });
     }
 

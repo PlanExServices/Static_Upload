@@ -648,7 +648,7 @@ time { cursor: default; }
       <div class="foot-btns">
         <button class="btn ghost sm" data-action="export" title="Download a JSON backup">⇩ Export</button>
         <button class="btn ghost sm" data-action="import" title="Restore from a JSON backup">⇧ Import</button>
-        <button class="btn ghost sm danger" data-action="clear" title="Delete everything">✕ Clear</button>
+        <button class="btn ghost sm" data-action="open-github-cloud-modal" title="GitHub Cloud Storage">☁️ Cloud</button>
       </div>
       <div class="storage" id="storage"><span class="dot"></span><span id="storage-label">saved in this browser</span></div>
     </div>
@@ -946,6 +946,70 @@ async function copyText(t) {
   toast("Copied ✓");
 }
 
+
+
+/* ============================ GitHub Cloud Storage (Option A) ============================ */
+function slugify(str) {
+  return (str || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+async function clientCommitToGitHub(filePath, contentString, commitMessage) {
+  const token = localStorage.getItem("delquro_github_token") || "";
+  const repo = localStorage.getItem("delquro_github_repo") || "PlanExServices/Static_Upload";
+  const branch = localStorage.getItem("delquro_github_branch") || "main";
+  if (!token) return false;
+
+  try {
+    const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+    let existingSha = null;
+    try {
+      const getRes = await fetch(url + `?ref=${branch}`, {
+        headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
+      });
+      if (getRes.ok) {
+        const fileData = await getRes.json();
+        existingSha = fileData.sha;
+      }
+    } catch (e) {}
+
+    // Base64 encode in browser
+    const base64Content = btoa(unescape(encodeURIComponent(contentString)));
+    const payload = { message: commitMessage, content: base64Content, branch };
+    if (existingSha) payload.sha = existingSha;
+
+    const putRes = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    return putRes.ok;
+  } catch (err) {
+    console.error("Client GitHub commit error:", err);
+    return false;
+  }
+}
+
+async function autoSyncProjectToGitHub(project) {
+  const token = localStorage.getItem("delquro_github_token");
+  if (!token) return;
+  const slug = slugify(project.name);
+
+  // 1. Commit main database file
+  clientCommitToGitHub("data/delquro-db.json", JSON.stringify(db, null, 2), `Cloud Sync: add ${project.name}`);
+  // 2. Commit project card JSON
+  clientCommitToGitHub(`projects/${slug}.json`, JSON.stringify(project, null, 2), `Cloud Card: ${project.name}`);
+  // 3. Commit attached code
+  if (project.attached_code) {
+    const ext = (project.filename && project.filename.includes(".")) ? project.filename.split(".").pop() : "txt";
+    const filename = project.filename || `source.${ext}`;
+    clientCommitToGitHub(`code/${slug}/${filename}`, project.attached_code, `Cloud Code: ${project.name}`);
+  }
+}
 
 /* ============================ AI Intake & Code Analyzer ============================ */
 function analyzeCodeInBrowser(rawCode, filename = "") {
@@ -1289,7 +1353,8 @@ function renderIntake() {
       <button class="btn ghost" data-action="quick-paste-code">${icon("plus", 15)} Paste / Drop Code</button>
       <button class="btn ghost" data-action="copy-curl">${icon("copy", 15)} Copy curl</button>
       <button class="btn ghost" data-action="open-api-key-modal" title="Manage API Secret Key">🔑 ${localStorage.getItem("delquro_api_key") ? "Key Saved" : "Set API Key"}</button>
-      <button class="btn ghost" data-action="send-test-upload" title="Send a real test AI upload to verify connection">${icon("zap", 13)} Test AI Upload</button>
+      <button class="btn ghost" data-action="open-github-cloud-modal" title="Configure GitHub Cloud Storage">${icon("github", 14)} ☁️ GitHub Cloud</button>
+      <button class="btn ghost" data-action="send-test-upload" title="Send a real test AI upload to verify connection">${icon("zap", 13)} Test Upload</button>
       <button class="btn ghost" data-action="open-deploy-modal">${icon("external", 14)} 🚀 Publish</button>
     `)}
 
@@ -1832,6 +1897,166 @@ function dialogueForm(existing, pid) {
 
 /* ============================ actions ============================ */
 const actions = {
+  "open-github-cloud-modal": () => {
+    const savedToken = localStorage.getItem("delquro_github_token") || "";
+    const savedRepo = localStorage.getItem("delquro_github_repo") || "PlanExServices/Static_Upload";
+    const savedBranch = localStorage.getItem("delquro_github_branch") || "main";
+
+    openModal(`
+      <div class="modal-head">
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${icon("github", 20)}
+          <h3 style="margin:0;">☁️ GitHub Cloud Storage (Option A)</h3>
+        </div>
+        <button class="icon-btn modal-close">✕</button>
+      </div>
+
+      <p style="font-size:13px; color:var(--muted); margin-top:0;">
+        Store all your project cards and code files directly in your GitHub repository in the cloud. Every card you approve is automatically committed to your repo!
+      </p>
+
+      <label class="field">
+        <span class="field-label">GitHub Repository</span>
+        <input type="text" id="gh-repo-input" value="${esc(savedRepo)}" placeholder="owner/repository">
+      </label>
+
+      <label class="field">
+        <span class="field-label">Branch</span>
+        <input type="text" id="gh-branch-input" value="${esc(savedBranch)}" placeholder="main">
+      </label>
+
+      <label class="field">
+        <div class="field-label-row">
+          <span class="field-label">GitHub Personal Access Token</span>
+          <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener" style="font-size:11.5px;">Generate Token ↗</a>
+        </div>
+        <input type="password" id="gh-token-input" value="${esc(savedToken)}" placeholder="ghp_... or github_pat_..." style="font-family:var(--mono);">
+      </label>
+
+      <div style="margin:10px 0; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button type="button" class="btn ghost sm" id="gh-test-btn">${icon("dashboard", 13)} Test Connection</button>
+        <button type="button" class="btn ghost sm" id="gh-push-all-btn">${icon("upload", 13)} Push All to GitHub Now</button>
+        <button type="button" class="btn ghost sm" id="gh-pull-btn">${icon("external", 13)} Pull from GitHub</button>
+      </div>
+      <div id="gh-status-msg" style="font-size:12px; font-family:var(--mono); margin-bottom:10px; color:var(--muted);"></div>
+
+      <div style="background:var(--bg); border:1px solid var(--border2); border-radius:10px; padding:12px; font-size:12.5px; line-height:1.5;">
+        <div style="font-weight:700; color:var(--cyan); margin-bottom:4px;">✨ Where Files Live in GitHub:</div>
+        <div style="color:var(--muted);">
+          • <code>projects/[project-name].json</code> — Clean card metadata<br>
+          • <code>code/[project-name]/[file]</code> — Real source code files<br>
+          • <code>data/delquro-db.json</code> — Database backup
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn ghost modal-close">Cancel</button>
+        ${savedToken ? '<button class="btn ghost sm danger" id="gh-clear-btn">Disconnect</button>' : ''}
+        <button class="btn primary" id="gh-save-btn">💾 Save Cloud Settings</button>
+      </div>
+    `);
+
+    // Test GitHub Connection
+    $("#gh-test-btn").onclick = async () => {
+      const token = $("#gh-token-input").value.trim();
+      const repo = $("#gh-repo-input").value.trim();
+      const statusEl = $("#gh-status-msg");
+      if (!token) { statusEl.textContent = "⚠️ Please enter a token first"; statusEl.style.color = "var(--amber)"; return; }
+      statusEl.textContent = "Testing connection to " + repo + "...";
+      statusEl.style.color = "var(--muted)";
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}`, {
+          headers: { "Authorization": `Bearer ${token}`, "Accept": "application/vnd.github.v3+json" }
+        });
+        if (res.ok) {
+          statusEl.textContent = "✅ Connected to GitHub repository! (Write access verified)";
+          statusEl.style.color = "var(--green)";
+        } else {
+          statusEl.textContent = "❌ Failed (" + res.status + "). Check token permissions (needs repo or contents:write).";
+          statusEl.style.color = "var(--red)";
+        }
+      } catch (err) {
+        statusEl.textContent = "⚠️ Error: " + err.message;
+        statusEl.style.color = "var(--amber)";
+      }
+    };
+
+    // Push All Data to GitHub
+    $("#gh-push-all-btn").onclick = async () => {
+      const token = $("#gh-token-input").value.trim();
+      const repo = $("#gh-repo-input").value.trim();
+      const branch = $("#gh-branch-input").value.trim();
+      const statusEl = $("#gh-status-msg");
+      if (!token) { statusEl.textContent = "⚠️ Please enter a token first"; statusEl.style.color = "var(--amber)"; return; }
+      statusEl.textContent = "Committing data to GitHub...";
+      localStorage.setItem("delquro_github_token", token);
+      localStorage.setItem("delquro_github_repo", repo);
+      localStorage.setItem("delquro_github_branch", branch);
+
+      const ok = await clientCommitToGitHub("data/delquro-db.json", JSON.stringify(db, null, 2), "Manual Cloud Backup from DelQuro Files Pro");
+      if (ok) {
+        statusEl.textContent = `✅ Successfully committed data/delquro-db.json to ${repo} (${branch})!`;
+        statusEl.style.color = "var(--green)";
+        toast("Backed up to GitHub Cloud! ☁️");
+      } else {
+        statusEl.textContent = "❌ Failed to commit. Verify token permissions.";
+        statusEl.style.color = "var(--red)";
+      }
+    };
+
+    // Pull from GitHub
+    $("#gh-pull-btn").onclick = async () => {
+      const repo = $("#gh-repo-input").value.trim();
+      const branch = $("#gh-branch-input").value.trim();
+      const statusEl = $("#gh-status-msg");
+      statusEl.textContent = "Fetching latest data from GitHub...";
+      try {
+        const res = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/data/delquro-db.json?t=` + Date.now());
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData && Array.isArray(cloudData.projects)) {
+            db = Object.assign(emptyDB(), cloudData);
+            persist(); render();
+            statusEl.textContent = `✅ Restored ${db.projects.length} project(s) from GitHub!`;
+            statusEl.style.color = "var(--green)";
+            toast("Pulled latest data from GitHub! ✓");
+          }
+        } else {
+          statusEl.textContent = "⚠️ Could not find data/delquro-db.json on GitHub.";
+          statusEl.style.color = "var(--amber)";
+        }
+      } catch (err) {
+        statusEl.textContent = "❌ Pull error: " + err.message;
+        statusEl.style.color = "var(--red)";
+      }
+    };
+
+    // Save Settings
+    $("#gh-save-btn").onclick = () => {
+      const token = $("#gh-token-input").value.trim();
+      const repo = $("#gh-repo-input").value.trim() || "PlanExServices/Static_Upload";
+      const branch = $("#gh-branch-input").value.trim() || "main";
+      if (token) localStorage.setItem("delquro_github_token", token);
+      else localStorage.removeItem("delquro_github_token");
+      localStorage.setItem("delquro_github_repo", repo);
+      localStorage.setItem("delquro_github_branch", branch);
+      toast("GitHub Cloud settings saved! ☁️");
+      closeModal();
+      render();
+    };
+
+    // Clear Settings
+    const clrBtn = $("#gh-clear-btn");
+    if (clrBtn) {
+      clrBtn.onclick = () => {
+        localStorage.removeItem("delquro_github_token");
+        toast("GitHub token disconnected");
+        closeModal();
+        render();
+      };
+    }
+  },
+
   "send-test-upload": async () => {
     toast("Sending test AI upload to receiver...");
     const endpoint = getIntakeEndpoint();
@@ -2472,6 +2697,7 @@ How to import:
     };
 
     db.projects.unshift(newProject);
+    autoSyncProjectToGitHub(newProject);
 
     if (attachCode && code) {
       db.code.unshift({

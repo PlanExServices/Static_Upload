@@ -1,6 +1,22 @@
 {
-  "nextId": 62,
+  "nextId": 64,
   "projects": [
+    {
+      "id": 62,
+      "name": "Charlie - Elite Content Marketing Strategist",
+      "tagline": "AI-powered content system that drives pipeline, not just traffic, with 1→15 repurposing engine",
+      "description": "Elite content marketing agent (haiku) for 2024/2025. Implements 10-step framework: audience analysis, gap research, pillar strategy, AI-assisted creation with EEAT, omnichannel distribution, GA4 tracking, CRO optimization, scaling via repurposing, reporting, future planning. Includes 5 playbooks (SEO/SGE, social 2025 algorithms, email deliverability, distribution 1→15 engine, analytics/ROI), 6 templates (blog, social calendar, email sequences, content calendar, video scripts, product descriptions), and 5 workflows (SaaS launch, e-commerce launch, thought leadership, UGC/influencer, enterprise ABM). Built to scale content without scaling headcount and drive pipeline.",
+      "status": "active",
+      "stack": "Markdown, YAML, JSON, AI Workflows, SEO, GA4, Notion, Canva, Buffer, Klaviyo, Ahrefs",
+      "arena_link": "https://arena.ai/content-marketer-charlie",
+      "github_link": "https://github.com/delquro/charlie-content-marketer",
+      "emergent_link": "https://emergent.sh/charlie-content-marketer",
+      "base44_link": "https://base44.com/charlie-content-marketer",
+      "differentiator": "Unlike generic writers, Charlie thinks in pillars, buying committees, and pipeline ROI. Owns 2025 specifics: SGE citation tactics, LinkedIn doc carousels 3x reach, 1→15 repurposing engine, business case/ROI calculator for enterprise, whitelisted UGC ads 4x CTR, ABM tiers, and measures content-influenced pipeline not vanity traffic. System not just content - full growth engine.",
+      "attached_code": "name: content-marketer\ndisplay_name: Charlie - Elite Content Marketing Strategist\nmodel: haiku\nversion: 1.0.0\ndescription: Elite content marketing strategist specializing in AI-powered content creation, omnichannel distribution, SEO optimization, and data-driven performance marketing.\ncapabilities:\n  ai_content_creation:\n    - Agility Writer, ContentBot, Jasper integration\n    - Real-time SERP-optimized SEO content\n    - Topical mapping & content clusters\n  seo_search:\n    - Semantic SEO, entity optimization\n    - Schema markup & rich snippets\n    - SGE & Position Zero optimization\nresponse_approach:\n  1: Analyze target audience and define KPIs\n  2: Research competition and gaps\n  3: Develop pillar strategy\n  4: Create optimized content\n  5: Design omnichannel distribution (1->15 assets)",
+      "createdAt": "2026-08-27T20:55:14.902Z",
+      "updatedAt": "2026-08-27T20:55:14.902Z"
+    },
     {
       "name": "BluEEEz ",
       "tagline": "",
@@ -680,7 +696,17 @@
       "id": 54
     }
   ],
-  "code": [],
+  "code": [
+    {
+      "id": 63,
+      "projectId": 62,
+      "title": "agent.yaml (Source)",
+      "language": "markdown",
+      "notes": "Uploaded via AI Intake for ${newProject.name}",
+      "code": "name: content-marketer\ndisplay_name: Charlie - Elite Content Marketing Strategist\nmodel: haiku\nversion: 1.0.0\ndescription: Elite content marketing strategist specializing in AI-powered content creation, omnichannel distribution, SEO optimization, and data-driven performance marketing.\ncapabilities:\n  ai_content_creation:\n    - Agility Writer, ContentBot, Jasper integration\n    - Real-time SERP-optimized SEO content\n    - Topical mapping & content clusters\n  seo_search:\n    - Semantic SEO, entity optimization\n    - Schema markup & rich snippets\n    - SGE & Position Zero optimization\nresponse_approach:\n  1: Analyze target audience and define KPIs\n  2: Research competition and gaps\n  3: Develop pillar strategy\n  4: Create optimized content\n  5: Design omnichannel distribution (1->15 assets)",
+      "createdAt": "2026-08-27T20:55:14.903Z"
+    }
+  ],
   "dialogues": [
     {
       "speaker": "you",

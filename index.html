@@ -407,6 +407,14 @@ time { cursor: default; }
   .project-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
 }
 
+
+.railway-connect-box {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+  font-size: 12px; font-family: var(--mono); color: var(--muted);
+}
+.rc-online { color: var(--green); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.rc-offline { color: var(--amber); }
+
 /* ===== The DelQuro Files Pro — Platform Links & AI Intake Styles ===== */
 .btn.link-btn.emergent { border-color: rgba(53,217,160,0.4); color: var(--green); background: rgba(53,217,160,0.08); }
 .btn.link-btn.emergent:hover { background: rgba(53,217,160,0.14); }
@@ -757,114 +765,14 @@ function countWords(str) {
 
 function emptyDB() {
   return {
-    nextId: 10,
-    projects: [
-      {
-        id: 1,
-        name: "HyperAgent Orchestrator",
-        tagline: "Autonomous multi-model routing engine with sub-50ms latency",
-        description: "A lightweight orchestration framework that intelligently routes user prompts across Claude, GPT-4, and specialized local LLMs. It features zero-config streaming, automatic fallback handling, semantic caching, and full observability. Built for high-throughput production environments requiring ultra-low overhead.",
-        status: "active",
-        stack: "TypeScript, Node.js, Fastify, Redis, Arena SDK",
-        arena_link: "https://arena.ai/c/hyperagent-orchestrator",
-        github_link: "https://github.com/delquro/hyperagent",
-        emergent_link: "https://emergent.sh/app/hyperagent",
-        base44_link: "https://base44.com/apps/hyperagent",
-        differentiator: "Unlike heavy frameworks like LangChain, HyperAgent has zero runtime dependencies, a 12KB footprint, and sub-millisecond dispatch overhead with predictive model pre-warming.",
-        attached_code: `// HyperAgent Multi-Model Router\nimport { FastifyInstance } from "fastify";\n\nexport async function routeRequest(prompt: string, context: Record<string, any>) {\n  const complexity = evaluateComplexity(prompt);\n  return await executeModelCall(complexity > 0.7 ? "claude-3-7-sonnet" : "gpt-4o-mini", prompt, context);\n}`,
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updatedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 2,
-        name: "DelQuro Files Pro",
-        tagline: "Single-file build tracker with live AI code receiver and 120-word card synthesizer",
-        description: "The premier build log and project tracker for AI-augmented developers. Features zero-install single-file portability, live webhook code intake from any AI assistant, automatic 120-word card synthesis, and native multi-platform linking across Arena.ai, GitHub, Emergent.sh, and Base44.com.",
-        status: "shipped",
-        stack: "HTML5, CSS3, JavaScript, Node.js, REST API",
-        arena_link: "https://arena.ai/delquro",
-        github_link: "https://github.com/delquro/delquro-files",
-        emergent_link: "https://emergent.sh/delquro",
-        base44_link: "https://base44.com/delquro",
-        differentiator: "Bridges the gap between AI code generation and project management by providing an instant webhook receiver that turns raw AI code into structured, shareable cards in one click.",
-        attached_code: `// Live AI Code Receiver Endpoint\nconst server = http.createServer(async (req, res) => {\n  if (req.url === "/api/intake" && req.method === "POST") {\n    const card = analyzeCode(payload.code);\n    db.inbox.unshift(card);\n  }\n});`,
-        createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    ideas: [
-      {
-        id: 3,
-        title: "Auto-git commit webhook on DelQuro card creation",
-        body: "Allow DelQuro Files to trigger a GitHub dispatch event to commit the uploaded code snippet directly into a new repository branch.",
-        tags: "automation, github, webhooks",
-        status: "considering",
-        projectId: 2,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-      }
-    ],
-    changelog: [
-      {
-        id: 4,
-        projectId: 2,
-        title: "Added AI Intake Studio with 120-word card synthesizer",
-        version: "v1.0.0",
-        kind: "feature",
-        body: "Live webhook receiver, multi-platform URL linking (Arena.ai, GitHub, Emergent.sh, Base44.com), and 'The Edge' differentiator callout.",
-        createdAt: new Date().toISOString()
-      }
-    ],
-    builds: [
-      {
-        id: 5,
-        projectId: 2,
-        buildNo: "b-101",
-        status: "success",
-        summary: "DelQuro Files Pro release build deployed successfully.",
-        log: "All tests passed. Receiver listening on port 3000.",
-        createdAt: new Date().toISOString()
-      }
-    ],
-    code: [
-      {
-        id: 6,
-        projectId: 1,
-        title: "Fastify multi-model dispatch handler",
-        language: "typescript",
-        notes: "Primary router logic for HyperAgent.",
-        code: `export async function routeRequest(prompt: string, context: Record<string, any>) {\n  const complexity = evaluateComplexity(prompt);\n  return await executeModelCall(complexity > 0.7 ? "claude-3-7-sonnet" : "gpt-4o-mini", prompt, context);\n}`,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-      }
-    ],
-    dialogues: [
-      {
-        id: 7,
-        projectId: 2,
-        speaker: "you",
-        role: "user",
-        content: "We need an intake page that takes code from an AI and turns it into cards with 120-word max description, platform links, and differentiator.",
-        createdAt: new Date(Date.now() - 3600000).toISOString()
-      }
-    ],
-    inbox: [
-      {
-        id: "inbox-101",
-        name: "VectorFlow Neural Indexer",
-        tagline: "Ultra-fast approximate nearest neighbor vector indexing engine",
-        description: "VectorFlow is a high-performance vector similarity search engine implemented in Python and Rust. It provides sub-5ms cosine similarity lookups across millions of high-dimensional embeddings. Designed as an embedded library with zero external cluster requirements.",
-        wordCount: 35,
-        stack: "Python, Rust, FastAPI, NumPy",
-        arena_link: "https://arena.ai/c/vector-flow",
-        github_link: "https://github.com/delquro/vector-flow",
-        emergent_link: "https://emergent.sh/app/vector-flow",
-        base44_link: "https://base44.com/apps/vector-flow",
-        differentiator: "Runs completely in-process with zero network hops, delivering 10x lower latency than Pinecone or Weaviate for embedded AI workloads.",
-        filename: "vector_flow.py",
-        code: `# VectorFlow Neural Indexer\nfrom fastapi import FastAPI\nimport numpy as np\n\napp = FastAPI(title="VectorFlow")\nindex = {}\n\n@app.post("/index")\ndef add_vector(doc_id: str, vector: list[float]):\n    index[doc_id] = np.array(vector, dtype=np.float32)\n    return {"status": "indexed", "total": len(index)}\n\n@app.post("/search")\ndef search_similar(query: list[float], top_k: int = 5):\n    q = np.array(query, dtype=np.float32)\n    scores = {k: float(np.dot(q, v) / (np.linalg.norm(q) * np.linalg.norm(v))) for k, v in index.items()}\n    sorted_res = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]\n    return {"results": [{"id": k, "score": s} for k, s in sorted_res]}`,
-        status: "pending",
-        createdAt: new Date(Date.now() - 1800000).toISOString()
-      }
-    ]
+    nextId: 1,
+    projects: [],
+    ideas: [],
+    changelog: [],
+    builds: [],
+    code: [],
+    dialogues: [],
+    inbox: []
   };
 }
 let db = store.load() || emptyDB();
@@ -1117,6 +1025,17 @@ function analyzeCodeInBrowser(rawCode, filename = "") {
   };
 }
 
+
+function getIntakeEndpoint() {
+  const custom = localStorage.getItem("delquro_backend_url");
+  if (custom) return custom.replace(/\/+$/, "") + "/api/intake";
+  if (window.location.hostname.includes("onrender.com")) {
+    return window.location.origin + "/api/intake";
+  }
+  // Default to live Render endpoint
+  return "https://static-upload.onrender.com/api/intake";
+}
+
 function renderIntake() {
   const inbox = db.inbox || [];
   const draft = state.intakeDraft;
@@ -1164,7 +1083,7 @@ function renderIntake() {
       <p>No incoming code in queue. Tell an AI to POST to <code class="mono">/api/intake</code>, or click <strong>Paste / Drop Code</strong> below to test!</p>
       <div style="display:flex; gap:8px; margin-top:12px;">
         <button class="btn primary sm" data-action="quick-paste-code">${icon("plus", 13)} Paste / Drop Code</button>
-        <button class="btn ghost sm" data-action="load-demo-code">${icon("sparkles", 13)} Load Demo AI Project</button>
+        <button class="btn ghost sm" data-action="open-ai-prompt-modal">${icon("robot", 13)} Tell Your AI</button>
       </div>
     </div>`;
 
@@ -1334,13 +1253,30 @@ function renderIntake() {
       <div class="receiver-pulse">
         <span class="pulse-beacon"></span>
         <div class="receiver-info">
-          <span class="receiver-status">RECEIVER ACTIVE · WAITING FOR AI CODE</span>
-          <span class="receiver-url">Listening at <code>POST /api/intake</code> (Port 3000)</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="receiver-status">RECEIVER ACTIVE · WAITING FOR AI CODE</span>
+            <span class="badge st-active" style="font-size:10px; padding:1px 6px;">Live Cloud Webhook</span>
+          </div>
+          <span class="receiver-url" style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+            Listening at <code class="mono" style="font-weight:600; color:var(--cyan);">${esc(getIntakeEndpoint())}</code>
+            <button class="icon-btn mini" data-action="copy-intake-endpoint" title="Copy endpoint URL" style="width:28px; height:28px;">${icon("copy", 13)}</button>
+          </span>
         </div>
       </div>
       <div class="receiver-meta">
         <span class="queue-badge">${inbox.length} staged items</span>
-        <button class="btn ghost sm" data-action="refresh-inbox">${icon("dashboard", 13)} Refresh</button>
+        <button class="btn ghost sm" data-action="refresh-inbox">${icon("dashboard", 13)} Refresh Queue</button>
+      </div>
+    </div>
+
+    <div class="railway-connect-box" style="margin:-14px 0 22px 4px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="rc-label">☁️ Live Cloud Endpoint:</span>
+        <span class="rc-status"><span class="rc-online">● ${esc(getIntakeEndpoint())}</span></span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn ghost sm mini" data-action="copy-intake-endpoint">${icon("copy", 11)} Copy URL</button>
+        <button class="btn ghost sm mini" data-action="configure-railway-url">Change Backend</button>
       </div>
     </div>
 
@@ -1847,6 +1783,55 @@ function dialogueForm(existing, pid) {
 
 /* ============================ actions ============================ */
 const actions = {
+  "copy-intake-endpoint": () => {
+    copyText(getIntakeEndpoint());
+    toast("Intake URL copied: " + getIntakeEndpoint() + " ✓");
+  },
+  "configure-railway-url": () => {
+    const current = localStorage.getItem("delquro_backend_url") || "";
+    openModal(`
+      <div class="modal-head">
+        <h3>${icon("external", 18)} Connect Render / Webhook Backend URL</h3>
+        <button class="icon-btn modal-close">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:0;">
+        Deploy your repository to <strong>Render.com</strong> (100% Free, No Credit Card Required) or Railway to get a permanent 24/7 webhook endpoint. Paste your public URL below to connect it to this GitHub Pages dashboard!
+      </p>
+      <label class="field">
+        <span class="field-label">Live Webhook Domain / API URL (e.g. Render)</span>
+        <input type="url" id="rw-backend-input" value="${esc(current)}" placeholder="https://static-upload.onrender.com">
+      </label>
+      <div style="font-size:12px; color:var(--faint); margin-bottom:12px;">
+        💡 On Render: <strong>New + > Web Service</strong> > Select <code>PlanExServices/Static_Upload</code> > Start command: <code>node server.js</code> > Free tier.
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost modal-close">Cancel</button>
+        ${current ? '<button class="btn ghost sm danger" id="rw-disconnect-btn">Disconnect</button>' : ''}
+        <button class="btn primary" id="rw-save-btn">Save &amp; Connect</button>
+      </div>
+    `);
+
+    $("#rw-save-btn").onclick = async () => {
+      let val = ($("#rw-backend-input").value || "").trim().replace(/\/+$/, "");
+      if (val && !val.startsWith("http")) val = "https://" + val;
+      localStorage.setItem("delquro_backend_url", val);
+      closeModal();
+      toast("Railway backend URL saved! Syncing... ✓");
+      await triggerBackendSync();
+      render();
+    };
+
+    const disBtn = $("#rw-disconnect-btn");
+    if (disBtn) {
+      disBtn.onclick = () => {
+        localStorage.removeItem("delquro_backend_url");
+        closeModal();
+        toast("Disconnected Railway URL");
+        render();
+      };
+    }
+  },
+
   "open-deploy-modal": () => {
     openModal(`
       <div class="modal-head">
@@ -1894,58 +1879,87 @@ const actions = {
     `);
   },
 
-  "open-ai-prompt-modal": () => {
-    const host = window.location.origin || "http://localhost:3000";
-    const promptText = `You are an AI assistant helping me build software for "The DelQuro Files".
-Whenever you write code or finish a feature for me, please output a JSON intake card or send an HTTP POST request to:
-\${host}/api/intake
+    "open-ai-prompt-modal": () => {
+    const intakeUrl = getIntakeEndpoint();
+    const siteUrl = window.location.origin.includes("github.io") ? "https://planexservices.github.io/Static_Upload/" : window.location.origin + "/";
 
-JSON format:
+    const promptText = `You are an AI assistant helping me build and track software in "The DelQuro Files".
+Whenever you write code, propose an idea, or finish a feature for me:
+1. Formulate a structured project intake card.
+2. Send an HTTP POST request to my live receiver endpoint:
+   ${intakeUrl}
+
+JSON Payload Format:
 {
   "name": "<Project Name>",
-  "tagline": "<Punchy one-liner>",
-  "description": "<Concise overview, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
-  "stack": "<Comma-separated stack, e.g. React, TypeScript, FastAPI>",
-  "arena_link": "<https://arena.ai/... or your arena url>",
-  "github_link": "<https://github.com/... or your repository url>",
-  "emergent_link": "<https://emergent.sh/... or your emergent app url>",
-  "base44_link": "<https://base44.com/... or your base44 app url>",
-  "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat)>",
-  "filename": "<main file, e.g. app.py>",
-  "code": "<source code snippet>"
+  "tagline": "<Punchy one-sentence summary>",
+  "description": "<Concise overview of what it does, architecture, and goals — STRICT MAXIMUM 120 WORDS>",
+  "stack": "<Comma-separated technologies, e.g. React, TypeScript, FastAPI, Tailwind>",
+  "arena_link": "<https://arena.ai/... or placeholder>",
+  "github_link": "<https://github.com/... or placeholder>",
+  "emergent_link": "<https://emergent.sh/... or placeholder>",
+  "base44_link": "<https://base44.com/... or placeholder>",
+  "differentiator": "<What sets this idea apart from others in the same field (The Edge / Moat / Unfair Advantage)>",
+  "filename": "<main file name, e.g. app.py, agent.tsx>",
+  "code": "<source code snippet or key implementation>"
 }`;
 
-    const curlCmd = `curl -X POST \${host}/api/intake \\
+    const curlCmd = `curl -X POST ${intakeUrl} \\
   -H "Content-Type: application/json" \\
   -d @- << 'EOF'
 {
   "name": "HyperAgent Router",
-  "tagline": "Sub-50ms multi-model query router",
-  "description": "Ultra-lightweight multi-model dispatch router that directs user queries across Claude and GPT-4 based on evaluated prompt complexity with zero framework bloat.",
-  "stack": "TypeScript, Fastify, Redis",
+  "tagline": "Autonomous multi-model query router with sub-50ms latency",
+  "description": "HyperAgent Router evaluates prompt complexity in real time and dispatches requests to optimal frontier models with zero framework bloat.",
+  "stack": "TypeScript, Fastify, Redis, Arena SDK",
   "arena_link": "https://arena.ai/c/hyperagent",
-  "github_link": "https://github.com/delquro/hyperagent",
+  "github_link": "https://github.com/PlanExServices/Static_Upload",
   "emergent_link": "https://emergent.sh/app/hyperagent",
   "base44_link": "https://base44.com/apps/hyperagent",
-  "differentiator": "Sub-millisecond dispatch overhead with predictive model pre-warming.",
+  "differentiator": "Unlike heavy frameworks like LangChain, HyperAgent has zero runtime dependencies, a 12KB footprint, and sub-millisecond dispatch overhead.",
   "filename": "router.ts",
-  "code": "// TypeScript code here"
+  "code": "// TypeScript router code here"
 }
 EOF`;
 
+    const cursorRule = `# DelQuro Files Integration Rule (.cursorrules / System Prompt)
+Whenever finishing a task, milestone, or component:
+1. Formulate an intake card with:
+   - name: Project/Feature name
+   - tagline: One-line hook
+   - description: STRICTLY under 120 words
+   - stack: Comma-separated languages & libraries
+   - arena_link, github_link, emergent_link, base44_link
+   - differentiator: What sets it apart (The Edge)
+   - filename, code: Implementation code
+2. POST the JSON payload to:
+   ${intakeUrl}`;
+
+    const linkPrompt = `Ask your AI assistant:
+"Generate a 1-click upload link to ${siteUrl} with the project card JSON encoded in the URL hash #intake=..."
+
+Example output link from AI:
+[🚀 Upload to DelQuro Files](${siteUrl}#intake=%7B%22name%22%3A%22My%20Project%22%2C%22tagline%22%3A%22Instant%20card%22%2C%22description%22%3A%22120%20words%20max%22%2C%22stack%22%3A%22React%22%7D)`;
+
     openModal(`
       <div class="modal-head">
-        <h3>${icon("robot", 18)} Tell Your AI: How to Push Code to DelQuro Files</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${icon("robot", 20)}
+          <h3 style="margin:0;">Tell Your AI: Live Receiver Instructions</h3>
+        </div>
         <button class="icon-btn modal-close">✕</button>
       </div>
-      <p style="font-size:13.5px; color:var(--muted); margin-top:0;">
-        Give these instructions to Claude, ChatGPT, Cursor, Arena.ai Agent, or Aider so they automatically upload code and generate 120-word cards directly to your dashboard.
-      </p>
+
+      <div style="margin-bottom:12px; padding:10px 12px; border-radius:10px; background:rgba(56,204,255,0.08); border:1px solid rgba(56,204,255,0.25); font-size:12.5px;">
+        <span style="color:var(--cyan); font-weight:700;">LIVE ENDPOINT:</span>
+        <code class="mono" style="color:var(--text);">${intakeUrl}</code>
+      </div>
 
       <div class="prompt-tabs">
-        <button class="ptab-btn on" id="ptab-prompt">AI Prompt Template</button>
-        <button class="ptab-btn" id="ptab-curl">Terminal curl Command</button>
-        <button class="ptab-btn" id="ptab-cursor">.cursorrules / System Prompt</button>
+        <button class="ptab-btn on" id="ptab-prompt">🤖 AI Prompt (Claude/ChatGPT/Arena)</button>
+        <button class="ptab-btn" id="ptab-curl">⚡ Terminal curl</button>
+        <button class="ptab-btn" id="ptab-cursor">📝 Cursor / .cursorrules</button>
+        <button class="ptab-btn" id="ptab-link">🔗 1-Click Link</button>
       </div>
 
       <div id="pcontent" class="prompt-content">${esc(promptText)}</div>
@@ -1956,28 +1970,26 @@ EOF`;
       </div>
     `);
 
-    let activeTab = "prompt";
     const tabPrompt = $("#ptab-prompt");
     const tabCurl = $("#ptab-curl");
     const tabCursor = $("#ptab-cursor");
+    const tabLink = $("#ptab-link");
     const pcontent = $("#pcontent");
 
-    const updateTab = (t, content) => {
-      activeTab = t;
-      [tabPrompt, tabCurl, tabCursor].forEach(b => b.classList.remove("on"));
-      if (t === "prompt") tabPrompt.classList.add("on");
-      if (t === "curl") tabCurl.classList.add("on");
-      if (t === "cursor") tabCursor.classList.add("on");
+    const updateTab = (btn, content) => {
+      [tabPrompt, tabCurl, tabCursor, tabLink].forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
       pcontent.textContent = content;
     };
 
-    tabPrompt.onclick = () => updateTab("prompt", promptText);
-    tabCurl.onclick = () => updateTab("curl", curlCmd);
-    tabCursor.onclick = () => updateTab("cursor", `# DelQuro Files Integration Rule\nWhen writing projects, always draft the project intake card conforming to:\n- Name, Tagline\n- Description (STRICT MAXIMUM 120 WORDS)\n- Stack\n- arena.ai URL, github URL, emergent.sh URL, base44.com URL\n- What sets that idea apart from others in the same field (The Edge)\nThen POST to \${host}/api/intake`);
+    tabPrompt.onclick = () => updateTab(tabPrompt, promptText);
+    tabCurl.onclick = () => updateTab(tabCurl, curlCmd);
+    tabCursor.onclick = () => updateTab(tabCursor, cursorRule);
+    tabLink.onclick = () => updateTab(tabLink, linkPrompt);
 
     $("#copy-ai-inst").onclick = () => {
       copyText(pcontent.textContent);
-      toast("Instructions copied ✓");
+      toast("Instructions copied to clipboard! Paste into your AI ✓");
     };
   },
 
@@ -2017,7 +2029,9 @@ EOF`;
   },
 
   "copy-curl": () => {
-    const host = window.location.origin || "http://localhost:3000";
+    const host = window.location.origin || "https://planexservices.github.io/Static_Upload";
+    const isGitHubPages = window.location.hostname.includes("github.io");
+    const liveSiteURL = "https://planexservices.github.io/Static_Upload/";
     const cmd = `curl -X POST \${host}/api/intake -H "Content-Type: application/json" -d '{"name":"My Project","tagline":"Fast autonomous agent","description":"Streamlined AI agent built with zero dependencies.","stack":"Python, FastAPI","arena_link":"https://arena.ai/","github_link":"https://github.com/","emergent_link":"https://emergent.sh/","base44_link":"https://base44.com/","differentiator":"Sub-millisecond latency.","code":"# Python code"}'`;
     copyText(cmd);
     toast("Curl command copied to clipboard ✓");
@@ -2103,28 +2117,7 @@ EOF`;
     }
   },
 
-  "load-demo-code": () => {
-    const demoCode = `// Project: NeuralContext Router
-// Tagline: Real-time semantic cache and agent context compressor
-// Description: NeuralContext Router compresses long-horizon conversation histories into dense semantic embeddings. It reduces token consumption by up to 70% while maintaining 99.4% context recall across complex multi-turn developer dialogues. Features zero-config integration with modern AI APIs.
-// Differentiator: Combines client-side vector quantizing with predictive semantic chunking, eliminating the latency penalty of cloud vector databases.
-// Stack: TypeScript, React, Fastify, SQLite, Arena SDK
-// Arena: https://arena.ai/c/neural-context
-// GitHub: https://github.com/delquro/neural-context
-// Emergent: https://emergent.sh/apps/neural-context
-// Base44: https://base44.com/apps/neural-context
-
-import { FastifyInstance } from "fastify";
-
-export async function compressContext(history: Array<{ role: string, content: string }>) {
-  // Vector quantizing and semantic pruning
-  return history.filter(h => h.content.length > 5);
-}`;
-    const analyzed = analyzeCodeInBrowser(demoCode, "NeuralContext.ts");
-    state.intakeDraft = analyzed;
-    render();
-    toast("Loaded demo AI project into Studio ✓");
-  },
+  
 
   "clear-draft": () => {
     state.intakeDraft = null;
@@ -2472,6 +2465,160 @@ async function clearAll() {
   }
 }
 
+
+/* ============================ URL & GitHub Issues Intake Receiver ============================ */
+function checkURLForIntakePayload() {
+  try {
+    let payload = null;
+    const hash = window.location.hash;
+    const search = window.location.search;
+
+    if (hash && (hash.includes("intake=") || hash.includes("upload="))) {
+      const raw = hash.replace(/^#/, "").split(/(?:intake|upload)=/)[1];
+      if (raw) {
+        try {
+          payload = JSON.parse(decodeURIComponent(raw));
+        } catch (e) {
+          try {
+            payload = JSON.parse(atob(decodeURIComponent(raw)));
+          } catch (e2) {}
+        }
+      }
+    } else if (search) {
+      const params = new URLSearchParams(search);
+      if (params.get("intake") || params.get("upload")) {
+        const raw = params.get("intake") || params.get("upload");
+        try {
+          payload = JSON.parse(decodeURIComponent(raw));
+        } catch (e) {
+          try {
+            payload = JSON.parse(atob(decodeURIComponent(raw)));
+          } catch (e2) {}
+        }
+      } else if (params.get("name") || params.get("code")) {
+        payload = {
+          name: params.get("name") || "",
+          tagline: params.get("tagline") || "",
+          description: params.get("description") || params.get("desc") || "",
+          stack: params.get("stack") || "",
+          arena_link: params.get("arena") || params.get("arena_link") || "",
+          github_link: params.get("github") || params.get("github_link") || "",
+          emergent_link: params.get("emergent") || params.get("emergent_link") || "",
+          base44_link: params.get("base44") || params.get("base44_link") || "",
+          differentiator: params.get("edge") || params.get("diff") || params.get("differentiator") || "",
+          code: params.get("code") || ""
+        };
+      }
+    }
+
+    if (payload && (payload.name || payload.code || payload.description)) {
+      const analyzed = analyzeCodeInBrowser(payload.code || "", payload.filename || "");
+      let desc = (payload.description || payload.desc || analyzed.description || "").trim();
+      const words = desc.split(/\s+/).filter(Boolean);
+      if (words.length > 120) {
+        desc = words.slice(0, 120).join(" ") + "...";
+      }
+
+      const item = {
+        id: "url-" + Date.now(),
+        name: (payload.name || payload.title || analyzed.name).trim(),
+        tagline: (payload.tagline || payload.summary || analyzed.tagline).trim(),
+        description: desc,
+        wordCount: countWords(desc),
+        stack: (payload.stack || analyzed.stack).trim(),
+        arena_link: (payload.arena_link || payload.arena || analyzed.arena_link).trim(),
+        github_link: (payload.github_link || payload.github || analyzed.github_link).trim(),
+        emergent_link: (payload.emergent_link || payload.emergent || analyzed.emergent_link).trim(),
+        base44_link: (payload.base44_link || payload.base44 || analyzed.base44_link).trim(),
+        differentiator: (payload.differentiator || payload.edge || payload.diff || analyzed.differentiator).trim(),
+        code: payload.code || "",
+        status: "pending",
+        createdAt: nowISO()
+      };
+
+      if (!db.inbox) db.inbox = [];
+      const dupIdx = db.inbox.findIndex(i => i.name === item.name);
+      if (dupIdx !== -1) {
+        db.inbox[dupIdx] = item;
+      } else {
+        db.inbox.unshift(item);
+      }
+
+      persist();
+      state.intakeDraft = Object.assign({}, item);
+      go("intake");
+      toast("AI Project loaded into Card Studio! ⚡");
+
+      if (window.history && window.history.replaceState) {
+        const cleanURL = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanURL);
+      }
+    }
+  } catch (err) {
+    console.error("Error parsing URL intake payload", err);
+  }
+}
+
+async function syncGitHubIssuesIntake() {
+  const repo = "PlanExServices/Static_Upload";
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/issues?state=open&per_page=20`, {
+      headers: { Accept: "application/vnd.github.v3+json" }
+    });
+    if (res.ok) {
+      const issues = await res.json();
+      let newCount = 0;
+      if (!db.inbox) db.inbox = [];
+
+      issues.forEach(issue => {
+        const title = issue.title || "";
+        const body = issue.body || "";
+        const id = "gh-" + issue.number;
+
+        if (!db.inbox.some(i => i.id === id)) {
+          let data = {};
+          const jsonMatch = body.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try { data = JSON.parse(jsonMatch[0]); } catch (e) {}
+          }
+
+          const analyzed = analyzeCodeInBrowser(data.code || body, data.filename || "github_issue.txt");
+          let desc = (data.description || analyzed.description || "").trim();
+          const words = desc.split(/\s+/).filter(Boolean);
+          if (words.length > 120) desc = words.slice(0, 120).join(" ") + "...";
+
+          db.inbox.unshift({
+            id,
+            name: (data.name || title.replace(/\[AI Intake\]/i, "") || analyzed.name).trim(),
+            tagline: (data.tagline || analyzed.tagline).trim(),
+            description: desc,
+            wordCount: countWords(desc),
+            stack: (data.stack || analyzed.stack).trim(),
+            arena_link: (data.arena_link || analyzed.arena_link).trim(),
+            github_link: (data.github_link || analyzed.github_link).trim(),
+            emergent_link: (data.emergent_link || analyzed.emergent_link).trim(),
+            base44_link: (data.base44_link || analyzed.base44_link).trim(),
+            differentiator: (data.differentiator || analyzed.differentiator).trim(),
+            code: data.code || body,
+            status: "pending",
+            createdAt: issue.created_at || nowISO()
+          });
+          newCount++;
+        }
+      });
+
+      if (newCount > 0) {
+        persist();
+        updateCounts();
+        if (state.view === "intake" || state.view === "dashboard") render();
+        toast(`Synced ${newCount} new project(s) from GitHub Issues! ✓`);
+      }
+    }
+  } catch (e) {
+    // Quietly ignore if network/rate-limited
+  }
+}
+
 /* ============================ boot ============================ */
 buildNav();
 buildTabbar();
@@ -2507,10 +2654,35 @@ async function syncWithServerOnBoot() {
 updateStorageDot();
 render();
 syncWithServerOnBoot();
+checkURLForIntakePayload();
+syncGitHubIssuesIntake();
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous">
 // Background receiver polling: check for new AI code uploads every 4 seconds
+async function triggerBackendSync() {
+  const customURL = localStorage.getItem("delquro_backend_url") || "";
+  const endpoint = customURL ? customURL + "/api/intake" : "/api/intake";
+  try {
+    const res = await fetch(endpoint, { mode: "cors" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items && Array.isArray(data.items)) {
+        const prevCount = (db.inbox || []).length;
+        if (JSON.stringify(db.inbox) !== JSON.stringify(data.items)) {
+          db.inbox = data.items;
+          persist();
+          if (state.view === "intake" || state.view === "dashboard") render();
+          if (data.items.length > prevCount) toast("New code upload received from AI! ⚡");
+        }
+      }
+    }
+  } catch (e) {}
+}
+
 if (window.location.protocol.startsWith("http")) {
+  setInterval(triggerBackendSync, 4000);
+}
+if (false) {
   setInterval(async () => {
     try {
       const res = await fetch("/api/intake");

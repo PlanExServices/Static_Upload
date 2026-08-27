@@ -1,7 +1,7 @@
 /**
  * The DelQuro Files Pro — AI Code Intake Receiver & Project Management Server
  * Zero external dependencies — runs on standard Node.js (v18+)
- * Binds to 0.0.0.0:3000 for preview and API access.
+ * Fully optimized for Railway, Render, Docker, and Local environments.
  */
 
 const http = require("http");
@@ -9,12 +9,20 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
+// Railway sets PORT dynamically (e.g. 8080 or random port)
 const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
-const DATA_DIR = path.join(__dirname, "data");
+
+// Support custom persistent volume if configured in Railway (e.g. DATA_DIR=/data)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DB_FILE = path.join(DATA_DIR, "delquro-db.json");
 const INBOX_FILE = path.join(DATA_DIR, "inbox.json");
-const PUBLIC_HTML = path.join(__dirname, "delquro-files-pro.html");
+
+// Resolve public HTML file
+let PUBLIC_HTML = path.join(__dirname, "index.html");
+if (!fs.existsSync(PUBLIC_HTML)) {
+  PUBLIC_HTML = path.join(__dirname, "delquro-files-pro.html");
+}
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -155,156 +163,19 @@ function saveJSON(filePath, data) {
 // Initial DB setup if empty
 function getDB() {
   const fallback = {
-    nextId: 10,
-    projects: [
-      {
-        id: 1,
-        name: "HyperAgent Orchestrator",
-        tagline: "Autonomous multi-model routing engine with sub-50ms latency",
-        description: "A lightweight orchestration framework that intelligently routes user prompts across Claude, GPT-4, and specialized local LLMs. It features zero-config streaming, automatic fallback handling, semantic caching, and full observability. Built for high-throughput production environments requiring ultra-low overhead.",
-        status: "active",
-        stack: "TypeScript, Node.js, Fastify, Redis, Arena SDK",
-        arena_link: "https://arena.ai/c/hyperagent-orchestrator",
-        github_link: "https://github.com/delquro/hyperagent",
-        emergent_link: "https://emergent.sh/app/hyperagent",
-        base44_link: "https://base44.com/apps/hyperagent",
-        differentiator: "Unlike heavy frameworks like LangChain, HyperAgent has zero runtime dependencies, a 12KB footprint, and sub-millisecond dispatch overhead with predictive model pre-warming.",
-        attached_code: `// HyperAgent Multi-Model Router
-import { FastifyInstance } from "fastify";
-
-export async function routeRequest(prompt: string, context: Record<string, any>) {
-  const complexity = evaluateComplexity(prompt);
-  const targetModel = complexity > 0.7 ? "claude-3-7-sonnet" : "gpt-4o-mini";
-  console.log(\`[HyperAgent] Dispatching to \${targetModel} (complexity: \${complexity})\`);
-  return await executeModelCall(targetModel, prompt, context);
-}`,
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updatedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 2,
-        name: "DelQuro Files Pro",
-        tagline: "Single-file build tracker with live AI code receiver and 120-word card synthesizer",
-        description: "The premier build log and project tracker for AI-augmented developers. Features zero-install single-file portability, live webhook code intake from any AI assistant, automatic 120-word card synthesis, and native multi-platform linking across Arena.ai, GitHub, Emergent.sh, and Base44.com.",
-        status: "shipped",
-        stack: "HTML5, CSS3, JavaScript, Node.js, REST API",
-        arena_link: "https://arena.ai/delquro",
-        github_link: "https://github.com/delquro/delquro-files",
-        emergent_link: "https://emergent.sh/delquro",
-        base44_link: "https://base44.com/delquro",
-        differentiator: "Bridges the gap between AI code generation and project management by providing an instant webhook receiver that turns raw AI code into structured, shareable cards in one click.",
-        attached_code: `// DelQuro Files Pro — Instant Code Receiver & Card Synthesizer
-const server = http.createServer(async (req, res) => {
-  if (req.url === "/api/intake" && req.method === "POST") {
-    const payload = await readBody(req);
-    const card = analyzeCode(payload.code, payload.filename);
-    saveToInbox(card);
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ success: true, card }));
-  }
-});`,
-        createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    ideas: [
-      {
-        id: 3,
-        title: "Auto-git commit webhook on DelQuro card creation",
-        body: "Allow DelQuro Files to trigger a GitHub dispatch event to commit the uploaded code snippet directly into a new repository branch.",
-        tags: "automation, github, webhooks",
-        status: "considering",
-        projectId: 2,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-      }
-    ],
-    changelog: [
-      {
-        id: 4,
-        projectId: 2,
-        title: "Added AI Intake Studio with 120-word card synthesizer",
-        version: "v1.0.0",
-        kind: "feature",
-        body: "Live webhook receiver, multi-platform URL linking (Arena.ai, GitHub, Emergent.sh, Base44.com), and 'The Edge' differentiator callout.",
-        createdAt: new Date().toISOString()
-      }
-    ],
-    builds: [
-      {
-        id: 5,
-        projectId: 2,
-        buildNo: "b-101",
-        status: "success",
-        summary: "DelQuro Files Pro release build deployed successfully.",
-        log: "All tests passed. Receiver listening on port 3000.",
-        createdAt: new Date().toISOString()
-      }
-    ],
-    code: [
-      {
-        id: 6,
-        projectId: 1,
-        title: "Fastify multi-model dispatch handler",
-        language: "typescript",
-        notes: "Primary router logic for HyperAgent.",
-        code: `export async function routeRequest(prompt: string, context: Record<string, any>) {
-  const complexity = evaluateComplexity(prompt);
-  return await executeModelCall(complexity > 0.7 ? "claude-3-7-sonnet" : "gpt-4o-mini", prompt, context);
-}`,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-      }
-    ],
-    dialogues: [
-      {
-        id: 7,
-        projectId: 2,
-        speaker: "you",
-        role: "user",
-        content: "We need an intake page that takes code from an AI and turns it into cards with 120-word max description, platform links, and differentiator.",
-        createdAt: new Date(Date.now() - 3600000).toISOString()
-      }
-    ],
-    inbox: [
-      {
-        id: "inbox-101",
-        name: "VectorFlow Neural Indexer",
-        tagline: "Ultra-fast approximate nearest neighbor vector indexing engine",
-        description: "VectorFlow is a high-performance vector similarity search engine implemented in Python and Rust. It provides sub-5ms cosine similarity lookups across millions of high-dimensional embeddings. Designed as an embedded library with zero external cluster requirements.",
-        wordCount: 35,
-        stack: "Python, Rust, FastAPI, NumPy",
-        arena_link: "https://arena.ai/c/vector-flow",
-        github_link: "https://github.com/delquro/vector-flow",
-        emergent_link: "https://emergent.sh/app/vector-flow",
-        base44_link: "https://base44.com/apps/vector-flow",
-        differentiator: "Runs completely in-process with zero network hops, delivering 10x lower latency than Pinecone or Weaviate for embedded AI workloads.",
-        filename: "vector_flow.py",
-        code: `# VectorFlow Neural Indexer
-from fastapi import FastAPI, HTTPException
-import numpy as np
-
-app = FastAPI(title="VectorFlow")
-index = {}
-
-@app.post("/index")
-def add_vector(doc_id: str, vector: list[float]):
-    index[doc_id] = np.array(vector, dtype=np.float32)
-    return {"status": "indexed", "total": len(index)}
-
-@app.post("/search")
-def search_similar(query: list[float], top_k: int = 5):
-    q = np.array(query, dtype=np.float32)
-    scores = {k: float(np.dot(q, v) / (np.linalg.norm(q) * np.linalg.norm(v))) for k, v in index.items()}
-    sorted_res = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
-    return {"results": [{"id": k, "score": s} for k, s in sorted_res]}`,
-        status: "pending",
-        createdAt: new Date(Date.now() - 1800000).toISOString()
-      }
-    ]
+    nextId: 1,
+    projects: [],
+    ideas: [],
+    changelog: [],
+    builds: [],
+    code: [],
+    dialogues: [],
+    inbox: []
   };
 
   const current = loadJSON(DB_FILE, fallback);
-  // Ensure inbox exists
-  if (!current.inbox) current.inbox = fallback.inbox;
+  if (!current.inbox) current.inbox = [];
+  if (!current.projects) current.projects = [];
   return current;
 }
 
@@ -337,7 +208,7 @@ function readBody(req) {
 
 // Request dispatcher
 const server = http.createServer(async (req, res) => {
-  // Global CORS headers for seamless AI and browser interaction
+  // Global CORS headers for seamless AI and browser interaction from any origin
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
@@ -359,27 +230,20 @@ const server = http.createServer(async (req, res) => {
 
   try {
     // ----------------------------------------------------
-    // API: System Status & Discovery
+    // API: System Status & Railway Healthcheck
     // ----------------------------------------------------
-    if (pathname === "/api/status" && req.method === "GET") {
+    if ((pathname === "/api/status" || pathname === "/health" || pathname === "/ping") && req.method === "GET") {
       const db = getDB();
       return sendJSON(200, {
         status: "online",
-        name: "The DelQuro Files Pro — Live AI Code Receiver",
+        service: "The DelQuro Files Pro",
+        platform: process.env.RAILWAY_ENVIRONMENT ? "Railway" : "Node.js",
         port: PORT,
         intakeEndpoint: "/api/intake",
-        projectCount: db.projects.length,
+        projectCount: (db.projects || []).length,
         inboxCount: (db.inbox || []).length,
-        features: [
-          "Auto code analysis",
-          "120-word maximum description enforcement",
-          "Multi-platform URL linking (Arena.ai, GitHub, Emergent.sh, Base44.com)",
-          "The Edge / Differentiator synthesis",
-          "Bidirectional sync & offline localStorage support"
-        ],
-        instructions: {
-          curlExample: `curl -X POST http://${req.headers.host || "localhost:3000"}/api/intake -H "Content-Type: application/json" -d '{"code":"/* code */", "filename":"app.py"}'`
-        }
+        uptimeSeconds: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -404,17 +268,14 @@ const server = http.createServer(async (req, res) => {
       try {
         payload = JSON.parse(rawBody);
       } catch (e) {
-        // Raw text / code was sent directly
         payload = { code: rawBody, filename: "uploaded_code.txt" };
       }
 
       const rawCode = payload.code || payload.content || rawBody;
       const filename = payload.filename || payload.file || "snippet.txt";
 
-      // Run code analysis to infer missing fields
       const analyzed = analyzeCode(rawCode, filename);
 
-      // Merge explicit user/AI overrides if provided
       const finalName = (payload.name || payload.title || analyzed.name).trim();
       const finalTagline = (payload.tagline || payload.summary || analyzed.tagline).trim();
       let finalDesc = (payload.description || payload.desc || analyzed.description).trim();
@@ -515,7 +376,6 @@ const server = http.createServer(async (req, res) => {
 
       db.projects.unshift(newProject);
 
-      // If code was attached, also register it in code repository
       if (newProject.attached_code) {
         db.code.unshift({
           id: db.nextId++,
@@ -528,7 +388,6 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      // Remove from inbox if it was in inbox
       if (itemIdx !== -1) {
         db.inbox.splice(itemIdx, 1);
       }
@@ -547,7 +406,7 @@ const server = http.createServer(async (req, res) => {
     // ----------------------------------------------------
     if (pathname === "/api/projects" && req.method === "GET") {
       const db = getDB();
-      return sendJSON(200, { success: true, projects: db.projects });
+      return sendJSON(200, { success: true, projects: db.projects || [] });
     }
 
     // ----------------------------------------------------
@@ -605,14 +464,12 @@ const server = http.createServer(async (req, res) => {
       const clientDB = JSON.parse(rawBody);
       const serverDB = getDB();
 
-      // Merge projects: client takes precedence if newer, otherwise keep server
       const mergedProjects = [...serverDB.projects];
       (clientDB.projects || []).forEach(cp => {
         const idx = mergedProjects.findIndex(sp => sp.id === cp.id);
         if (idx === -1) {
           mergedProjects.unshift(cp);
         } else {
-          // If client version has newer or richer data, merge
           mergedProjects[idx] = { ...mergedProjects[idx], ...cp };
         }
       });
@@ -636,7 +493,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ----------------------------------------------------
-    // Static HTML serving: delquro-files-pro.html
+    // Static HTML serving: index.html
     // ----------------------------------------------------
     if (pathname === "/" || pathname === "/index.html" || pathname === "/app") {
       if (fs.existsSync(PUBLIC_HTML)) {
@@ -671,8 +528,9 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`=======================================================`);
-  console.log(`  The DelQuro Files Pro — Live AI Code Receiver Active `);
+  console.log(`  The DelQuro Files Pro — Railway & Cloud Server Ready `);
   console.log(`  Listening at http://${HOST}:${PORT}`);
+  console.log(`  Health Check: http://${HOST}:${PORT}/api/status`);
   console.log(`  Intake Endpoint: POST http://${HOST}:${PORT}/api/intake`);
   console.log(`=======================================================`);
 });
